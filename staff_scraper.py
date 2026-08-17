@@ -54,16 +54,13 @@ ANIME_ALIASES = {
     "chainsaw man reze": "chainsaw-man-the-movie-reze-arc",
     "chainsaw man reze arc": "chainsaw-man-the-movie-reze-arc",
 
-    
+
     # --------------------------------------------------------
     # Black Clover
     # --------------------------------------------------------
 
-    "black clover":
-        "black-clover",
-
-    "bc":
-        "black-clover",
+    "black clover": "black-clover",
+    "bc": "black-clover",
 
     "black clover sword of the wizard king":
         "black-clover-sword-of-the-wizard-king",
@@ -72,9 +69,6 @@ ANIME_ALIASES = {
         "black-clover-sword-of-the-wizard-king",
 
     "black clover movie":
-        "black-clover-sword-of-the-wizard-king",
-
-    "black clover sword of the wizard king":
         "black-clover-sword-of-the-wizard-king",
 
 
@@ -86,7 +80,7 @@ ANIME_ALIASES = {
     "to be hero": "to-be-hero-x",
     "tbhx": "to-be-hero-x",
     "tbh x": "to-be-hero-x",
-    "hero x": "to-be-hero-x",  
+    "hero x": "to-be-hero-x",
 
 
     # --------------------------------------------------------
@@ -108,11 +102,20 @@ ANIME_ALIASES = {
     "mha final season": "my-hero-academia-final-season",
 
     # MHA Movies
-    "mha two heroes": "my-hero-academia-two-heroes",
-    "mha heroes rising": "my-hero-academia-heroes-rising",
-    "mha world heroes mission": "my-hero-academia-world-heroes-mission",
-    "mha you're next": "my-hero-academia-you-re-next",
-    "mha you are next": "my-hero-academia-you-re-next",
+    "mha two heroes":
+        "my-hero-academia-two-heroes",
+
+    "mha heroes rising":
+        "my-hero-academia-heroes-rising",
+
+    "mha world heroes mission":
+        "my-hero-academia-world-heroes-mission",
+
+    "mha you're next":
+        "my-hero-academia-you-re-next",
+
+    "mha you are next":
+        "my-hero-academia-you-re-next",
 
     "my hero academia you're next":
         "my-hero-academia-you-re-next",
@@ -131,11 +134,17 @@ ANIME_ALIASES = {
     "one piece": "one-piece",
     "op": "one-piece",
 
-    "one piece fan letter": "one-piece-fan-letter",
-    "op fan letter": "one-piece-fan-letter",
+    "one piece fan letter":
+        "one-piece-fan-letter",
 
-    "one piece fanletter": "one-piece-fan-letter",
-    "op fanletter": "one-piece-fan-letter",
+    "op fan letter":
+        "one-piece-fan-letter",
+
+    "one piece fanletter":
+        "one-piece-fan-letter",
+
+    "op fanletter":
+        "one-piece-fan-letter",
 
 
     # --------------------------------------------------------
@@ -144,11 +153,17 @@ ANIME_ALIASES = {
 
     "bleach": "bleach",
 
-    "bleach tybw": "bleach-thousand-year-blood-war",
-    "tybw": "bleach-thousand-year-blood-war",
+    "bleach tybw":
+        "bleach-thousand-year-blood-war",
 
-    "bleach tybw s1": "bleach-thousand-year-blood-war",
-    "tybw s1": "bleach-thousand-year-blood-war",
+    "tybw":
+        "bleach-thousand-year-blood-war",
+
+    "bleach tybw s1":
+        "bleach-thousand-year-blood-war",
+
+    "tybw s1":
+        "bleach-thousand-year-blood-war",
 
     "bleach tybw s2":
         "bleach-thousand-year-blood-war-the-separation",
@@ -701,19 +716,28 @@ def role_matches(role_name, wanted):
 
     role = normalize(role_name)
 
+    if not role:
+        return False
+
+    # --------------------------------------------------------
     # Direct match
+    # --------------------------------------------------------
+
     if role == normalize(wanted):
         return True
 
+    # --------------------------------------------------------
     # Exact aliases
+    # --------------------------------------------------------
+
     for alias in ROLE_ALIASES.get(wanted, []):
 
         if role == normalize(alias):
             return True
 
-    # --------------------------------------------------------
-    # Storyboard
-    # --------------------------------------------------------
+    # ========================================================
+    # STORYBOARD
+    # ========================================================
 
     if wanted == "sb":
 
@@ -723,9 +747,12 @@ def role_matches(role_name, wanted):
         if "story board" in role:
             return True
 
-    # --------------------------------------------------------
-    # Episode Director
-    # --------------------------------------------------------
+        if "絵コンテ" in role:
+            return True
+
+    # ========================================================
+    # EPISODE DIRECTOR
+    # ========================================================
 
     if wanted == "ed":
 
@@ -738,19 +765,104 @@ def role_matches(role_name, wanted):
         if "unit director" in role:
             return True
 
-    # --------------------------------------------------------
-    # 2nd Key Animation
-    # --------------------------------------------------------
+        if "演出" in role:
+            return True
+
+    # ========================================================
+    # ANIMATION DIRECTOR
+    #
+    # Supports combined roles:
+    #
+    # Animation Director / Key Animation
+    # Animation Director / In-Between Check
+    # Animation Director / Key Animation /
+    # In-Between Check / Design Cooperation
+    # ========================================================
+
+    if wanted == "ad":
+
+        # Do not classify Assistant AD as AD.
+
+        if (
+            "assistant animation director" in role
+            or "assistant ad" in role
+            or "作画監督補佐" in role
+        ):
+            return False
+
+        if "animation director" in role:
+            return True
+
+        if "animation direction" in role:
+            return True
+
+        if "作画監督" in role:
+            return True
+
+    # ========================================================
+    # ASSISTANT ANIMATION DIRECTOR
+    # ========================================================
+
+    if wanted == "ass_ad":
+
+        if "assistant animation director" in role:
+            return True
+
+        if "assistant ad" in role:
+            return True
+
+        if "作画監督補佐" in role:
+            return True
+
+    # ========================================================
+    # KEY ANIMATION
+    #
+    # Supports combined roles:
+    #
+    # Animation Director / Key Animation
+    # Key Animation / Design
+    # Key Animation / In-Between Check
+    #
+    # 2KA is kept separate.
+    # ========================================================
+
+    if wanted == "ka":
+
+        # Never count 2KA as normal KA.
+
+        if (
+            "2nd key animation" in role
+            or "2nd key animator" in role
+            or "second key animation" in role
+            or "second key animator" in role
+            or "2nd key" in role
+            or "second key" in role
+            or "第二原画" in role
+        ):
+            return False
+
+        if "key animation" in role:
+            return True
+
+        if "key animator" in role:
+            return True
+
+        if "原画" in role:
+            return True
+
+    # ========================================================
+    # 2ND KEY ANIMATION
+    # ========================================================
 
     if wanted == "2ka":
 
         if "2nd key animation" in role:
             return True
 
-        if "second key animation" in role:
+        if "2nd key animator" in role:
             return True
 
-        if "2nd key animator" in role:
+        if "second key animation" in role:
             return True
 
         if "second key animator" in role:
@@ -760,6 +872,60 @@ def role_matches(role_name, wanted):
             return True
 
         if "second key" in role:
+            return True
+
+        if "第二原画" in role:
+            return True
+
+    # ========================================================
+    # CHIEF ANIMATION DIRECTOR
+    # ========================================================
+
+    if wanted == "cad":
+
+        if "chief animation director" in role:
+            return True
+
+        if "chief animation directors" in role:
+            return True
+
+        if "chief animation direction" in role:
+            return True
+
+        if "総作画監督" in role:
+            return True
+
+    # ========================================================
+    # CHARACTER DESIGN
+    # ========================================================
+
+    if wanted == "cd":
+
+        if "character design" in role:
+            return True
+
+        if "character designs" in role:
+            return True
+
+        if "character designer" in role:
+            return True
+
+        if "キャラクターデザイン" in role:
+            return True
+
+    # ========================================================
+    # ARTIST
+    # ========================================================
+
+    if wanted == "artist":
+
+        if "artist" in role:
+            return True
+
+        if "歌手" in role:
+            return True
+
+        if "アーティスト" in role:
             return True
 
     return False
@@ -799,19 +965,6 @@ def find_menu(data, target):
 
     # ========================================================
     # OP / ED
-    #
-    # Important:
-    #
-    # Some files:
-    # OP
-    # ED
-    #
-    # Others:
-    # OP1
-    # OP2
-    # ED1
-    #
-    # Support both.
     # ========================================================
 
     theme_match = re.fullmatch(
@@ -852,7 +1005,6 @@ def find_menu(data, target):
                 f"ending{number:02d}",
             })
 
-        # Try OP1 / ED1 style first
         for menu in menus:
 
             if not isinstance(menu, dict):
@@ -866,14 +1018,8 @@ def find_menu(data, target):
                 return menu
 
         # ----------------------------------------------------
-        # IMPORTANT FALLBACK
-        #
-        # If user requests OP1 but file only has OP,
-        # use OP when it is the only opening menu.
-        # Same for ED1.
+        # OP / ED fallback
         # ----------------------------------------------------
-
-        simple_theme = kind
 
         simple_matches = []
 
@@ -886,15 +1032,15 @@ def find_menu(data, target):
                 menu.get("name", "")
             )
 
-            if name == simple_theme:
+            if name == kind:
                 simple_matches.append(menu)
 
         if len(simple_matches) == 1:
-
             return simple_matches[0]
 
-        # If there is only one opening/ending menu and
-        # the requested number is 1, use it.
+        # ----------------------------------------------------
+        # Opening / ending fallback
+        # ----------------------------------------------------
 
         if number == 1:
 
@@ -981,21 +1127,7 @@ def find_menu(data, target):
                     return menu
 
         # ----------------------------------------------------
-        # SPECIAL / MOVIE FALLBACK
-        #
-        # Some movies/specials have:
-        #
-        # Special
-        #
-        # instead of:
-        #
-        # #01
-        #
-        # This allows:
-        #
-        # one piece fan letter 1
-        #
-        # to find "Special".
+        # Special / movie fallback
         # ----------------------------------------------------
 
         if episode == 1:
@@ -1023,7 +1155,6 @@ def find_menu(data, target):
                     special_candidates.append(menu)
 
             if len(special_candidates) == 1:
-
                 return special_candidates[0]
 
     return None
@@ -1060,7 +1191,10 @@ def find_roles(menu, wanted):
             if not isinstance(role, dict):
                 continue
 
-            role_name = role.get("name", "")
+            role_name = role.get(
+                "name",
+                ""
+            )
 
             if not role_matches(
                 role_name,
@@ -1068,9 +1202,10 @@ def find_roles(menu, wanted):
             ):
                 continue
 
-            staff = role.get("staff")
+            staff = role.get(
+                "staff"
+            )
 
-            # Some data can theoretically contain a number.
             if isinstance(staff, int):
 
                 results.append(
@@ -1084,7 +1219,9 @@ def find_roles(menu, wanted):
 
             for person in staff:
 
-                name = get_staff_name(person)
+                name = get_staff_name(
+                    person
+                )
 
                 if name:
                     results.append(name)
@@ -1125,7 +1262,10 @@ def get_2ka_count(menu):
             if not isinstance(role, dict):
                 continue
 
-            role_name = role.get("name", "")
+            role_name = role.get(
+                "name",
+                ""
+            )
 
             if not role_matches(
                 role_name,
@@ -1133,7 +1273,9 @@ def get_2ka_count(menu):
             ):
                 continue
 
-            staff = role.get("staff")
+            staff = role.get(
+                "staff"
+            )
 
             if isinstance(staff, int):
 
@@ -1141,7 +1283,14 @@ def get_2ka_count(menu):
 
             elif isinstance(staff, list):
 
-                total += len(staff)
+                # Only count actual staff entries.
+                # Empty dictionaries / empty names should
+                # not inflate the count.
+
+                for person in staff:
+
+                    if get_staff_name(person):
+                        total += 1
 
     return total
 
@@ -1178,7 +1327,10 @@ def get_artist(menu):
                 continue
 
             role_name = normalize(
-                role.get("name", "")
+                role.get(
+                    "name",
+                    ""
+                )
             )
 
             is_artist = role_matches(
@@ -1186,8 +1338,6 @@ def get_artist(menu):
                 "artist"
             )
 
-            # Opening/ending singers are sometimes
-            # stored under "Song".
             is_song = (
                 role_name == "song"
             )
@@ -1208,7 +1358,9 @@ def get_artist(menu):
 
             for person in staff:
 
-                name = get_staff_name(person)
+                name = get_staff_name(
+                    person
+                )
 
                 if name:
                     artists.append(name)
@@ -1248,7 +1400,10 @@ def add_combined_sb_ed(menu, result):
                 continue
 
             role_name = normalize(
-                role.get("name", "")
+                role.get(
+                    "name",
+                    ""
+                )
             )
 
             staff = role.get(
@@ -1263,7 +1418,9 @@ def add_combined_sb_ed(menu, result):
 
             for person in staff:
 
-                name = get_staff_name(person)
+                name = get_staff_name(
+                    person
+                )
 
                 if name:
                     names.append(name)
@@ -1271,49 +1428,54 @@ def add_combined_sb_ed(menu, result):
             if not names:
                 continue
 
-            role_lower = role_name.lower()
-
             # ------------------------------------------------
             # Storyboard + Unit Director
             # ------------------------------------------------
 
-            is_combined = (
-                "storyboard" in role_lower
-                and "unit director" in role_lower
+            is_sb_unit = (
+                "storyboard" in role_name
+                and "unit director" in role_name
             )
 
             # ------------------------------------------------
             # Storyboard + Episode Director
             # ------------------------------------------------
 
-            is_sb_ed = (
-                "storyboard" in role_lower
+            is_sb_episode = (
+                "storyboard" in role_name
                 and (
-                    "episode director" in role_lower
-                    or "episode direction" in role_lower
+                    "episode director" in role_name
+                    or "episode direction" in role_name
                 )
             )
 
-            # ------------------------------------------------
-            # Storyboard
-            # ------------------------------------------------
+            if is_sb_unit or is_sb_episode:
 
-            if is_combined or is_sb_ed:
+                result["SB"].extend(
+                    names
+                )
 
-                result["SB"].extend(names)
-                result["ED"].extend(names)
+                result["ED"].extend(
+                    names
+                )
 
                 continue
+
+            # ------------------------------------------------
+            # Normal SB
+            # ------------------------------------------------
 
             if role_matches(
                 role_name,
                 "sb"
             ):
 
-                result["SB"].extend(names)
+                result["SB"].extend(
+                    names
+                )
 
             # ------------------------------------------------
-            # Episode Director
+            # Normal ED
             # ------------------------------------------------
 
             if role_matches(
@@ -1321,7 +1483,9 @@ def add_combined_sb_ed(menu, result):
                 "ed"
             ):
 
-                result["ED"].extend(names)
+                result["ED"].extend(
+                    names
+                )
 
 
 # ============================================================
@@ -1558,7 +1722,6 @@ def get_exact_file(anime_slug):
     )
 
     if os.path.isfile(path):
-
         return filename
 
     return None
@@ -1919,15 +2082,11 @@ if __name__ == "__main__":
                 continue
 
             print()
-            print(
-                role
-            )
+            print(role)
 
             if role == "2KA":
 
-                print(
-                    names
-                )
+                print(names)
 
             else:
 
