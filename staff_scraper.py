@@ -120,7 +120,8 @@ ANIME_ALIASES = {
     # JoJo
     # --------------------------------------------------------
 
-    "jojo": "jojo-s-bizarre-adventure-tv",
+    "jojo":
+        "jojo-s-bizarre-adventure-tv",
 
     "jojo s1":
         "jojo-s-bizarre-adventure-tv",
@@ -184,63 +185,99 @@ ANIME_ALIASES = {
     # Mob Psycho
     # --------------------------------------------------------
 
-    "mob": "mob-psycho-100",
-    "mob psycho": "mob-psycho-100",
+    "mob":
+        "mob-psycho-100",
 
-    "mob s1": "mob-psycho-100",
-    "mob s2": "mob-psycho-100-ii",
-    "mob s3": "mob-psycho-100-iii",
+    "mob psycho":
+        "mob-psycho-100",
+
+    "mob s1":
+        "mob-psycho-100",
+
+    "mob s2":
+        "mob-psycho-100-ii",
+
+    "mob s3":
+        "mob-psycho-100-iii",
 
 
     # --------------------------------------------------------
     # One Punch Man
     # --------------------------------------------------------
 
-    "opm": "one-punch-man",
-    "one punch man": "one-punch-man",
+    "opm":
+        "one-punch-man",
 
-    "opm s1": "one-punch-man",
-    "opm s2": "one-punch-man-2",
-    "opm s3": "one-punch-man-3",
+    "one punch man":
+        "one-punch-man",
+
+    "opm s1":
+        "one-punch-man",
+
+    "opm s2":
+        "one-punch-man-2",
+
+    "opm s3":
+        "one-punch-man-3",
 
 
     # --------------------------------------------------------
     # Naruto
     # --------------------------------------------------------
 
-    "naruto": "naruto",
-    "naruto shippuden": "naruto-shippuuden",
-    "shippuden": "naruto-shippuuden",
+    "naruto":
+        "naruto",
+
+    "naruto shippuden":
+        "naruto-shippuuden",
+
+    "shippuden":
+        "naruto-shippuuden",
 
 
     # --------------------------------------------------------
     # Boruto
     # --------------------------------------------------------
 
-    "boruto": "boruto-naruto-next-generations",
-    "boruto naruto": "boruto-naruto-next-generations",
+    "boruto":
+        "boruto-naruto-next-generations",
+
+    "boruto naruto":
+        "boruto-naruto-next-generations",
 
 
     # --------------------------------------------------------
     # Dragon Ball
     # --------------------------------------------------------
 
-    "dbs": "dragon-ball-super",
-    "dragon ball super": "dragon-ball-super",
+    "dbs":
+        "dragon-ball-super",
 
-    "dbs broly": "dragon-ball-super-broly",
-    "dragon ball broly": "dragon-ball-super-broly",
+    "dragon ball super":
+        "dragon-ball-super",
+
+    "dbs broly":
+        "dragon-ball-super-broly",
+
+    "dragon ball broly":
+        "dragon-ball-super-broly",
 
 
     # --------------------------------------------------------
     # Frieren
     # --------------------------------------------------------
 
-    "frieren": "sousou-no-frieren",
-    "sousou no frieren": "sousou-no-frieren",
+    "frieren":
+        "sousou-no-frieren",
 
-    "frieren s1": "sousou-no-frieren",
-    "frieren s2": "sousou-no-frieren-2nd-season",
+    "sousou no frieren":
+        "sousou-no-frieren",
+
+    "frieren s1":
+        "sousou-no-frieren",
+
+    "frieren s2":
+        "sousou-no-frieren-2nd-season",
 
     "frieren season 2":
         "sousou-no-frieren-2nd-season",
@@ -253,19 +290,28 @@ ANIME_ALIASES = {
     # Yomi no Tsugai
     # --------------------------------------------------------
 
-    "yomi": "yomi-no-tsugai",
-    "yomi no tsugai": "yomi-no-tsugai",
-    "yomi no tsugai s1": "yomi-no-tsugai",
+    "yomi":
+        "yomi-no-tsugai",
+
+    "yomi no tsugai":
+        "yomi-no-tsugai",
+
+    "yomi no tsugai s1":
+        "yomi-no-tsugai",
 
 
     # --------------------------------------------------------
     # Solo Leveling
     # --------------------------------------------------------
 
-    "solo": "solo-leveling",
-    "solo leveling": "solo-leveling",
+    "solo":
+        "solo-leveling",
 
-    "solo leveling s1": "solo-leveling",
+    "solo leveling":
+        "solo-leveling",
+
+    "solo leveling s1":
+        "solo-leveling",
 
     "solo leveling s2":
         "solo-leveling-season-2-arise-from-the-shadow",
@@ -275,8 +321,11 @@ ANIME_ALIASES = {
     # Precure
     # --------------------------------------------------------
 
-    "futari wa precure": "futari-wa-precure",
-    "precure": "futari-wa-precure",
+    "futari wa precure":
+        "futari-wa-precure",
+
+    "precure":
+        "futari-wa-precure",
 
     "futari wa precure max heart":
         "futari-wa-precure-max-heart",
@@ -509,12 +558,17 @@ ROLE_ALIASES = {
         "storyboard",
         "story board",
         "storyboards",
+        "storyboard / unit director",
+        "storyboard/unit director",
         "絵コンテ",
     ],
 
     "ed": [
         "episode director",
         "episode direction",
+        "unit director",
+        "storyboard / unit director",
+        "storyboard/unit director",
         "演出",
     ],
 
@@ -580,10 +634,7 @@ def role_matches(role_name, wanted):
     if role == wanted:
         return True
 
-    for alias in ROLE_ALIASES.get(
-        wanted,
-        []
-    ):
+    for alias in ROLE_ALIASES.get(wanted, []):
 
         if role == normalize(alias):
             return True
@@ -600,15 +651,9 @@ def find_menu(data, target):
     if not isinstance(data, dict):
         return None
 
-    menus = data.get(
-        "menus",
-        []
-    )
+    menus = data.get("menus", [])
 
-    if not isinstance(
-        menus,
-        list
-    ):
+    if not isinstance(menus, list):
         return None
 
     target = normalize(target)
@@ -619,31 +664,18 @@ def find_menu(data, target):
 
     for menu in menus:
 
-        if not isinstance(
-            menu,
-            dict
-        ):
+        if not isinstance(menu, dict):
             continue
 
         name = normalize(
-            menu.get(
-                "name",
-                ""
-            )
+            menu.get("name", "")
         )
 
         if name == target:
             return menu
 
     # --------------------------------------------------------
-    # Normalize OP / ED formatting
-    #
-    # op1
-    # op 1
-    # OP1
-    # OP 1
-    # opening 1
-    # opening1
+    # OP / ED formatting
     # --------------------------------------------------------
 
     theme_match = re.fullmatch(
@@ -654,6 +686,7 @@ def find_menu(data, target):
     if theme_match:
 
         kind = theme_match.group(1)
+
         number = int(
             theme_match.group(2)
         )
@@ -685,17 +718,11 @@ def find_menu(data, target):
 
         for menu in menus:
 
-            if not isinstance(
-                menu,
-                dict
-            ):
+            if not isinstance(menu, dict):
                 continue
 
             name = normalize(
-                menu.get(
-                    "name",
-                    ""
-                )
+                menu.get("name", "")
             )
 
             if name in possible:
@@ -722,17 +749,11 @@ def find_menu(data, target):
 
         for menu in menus:
 
-            if not isinstance(
-                menu,
-                dict
-            ):
+            if not isinstance(menu, dict):
                 continue
 
             name = normalize(
-                menu.get(
-                    "name",
-                    ""
-                )
+                menu.get("name", "")
             )
 
             if name in possible:
@@ -742,17 +763,11 @@ def find_menu(data, target):
 
         for menu in menus:
 
-            if not isinstance(
-                menu,
-                dict
-            ):
+            if not isinstance(menu, dict):
                 continue
 
             name = str(
-                menu.get(
-                    "name",
-                    ""
-                )
+                menu.get("name", "")
             ).strip()
 
             match = re.search(
@@ -762,10 +777,7 @@ def find_menu(data, target):
 
             if match:
 
-                if int(
-                    match.group(1)
-                ) == episode:
-
+                if int(match.group(1)) == episode:
                     return menu
 
         # Movie fallback
@@ -774,17 +786,11 @@ def find_menu(data, target):
 
             for menu in menus:
 
-                if not isinstance(
-                    menu,
-                    dict
-                ):
+                if not isinstance(menu, dict):
                     continue
 
                 name = normalize(
-                    menu.get(
-                        "name",
-                        ""
-                    )
+                    menu.get("name", "")
                 )
 
                 if name == "movie":
@@ -799,56 +805,32 @@ def find_menu(data, target):
 
 def find_roles(menu, wanted):
 
-    if not isinstance(
-        menu,
-        dict
-    ):
+    if not isinstance(menu, dict):
         return []
 
-    credits = menu.get(
-        "credits",
-        []
-    )
+    credits = menu.get("credits", [])
 
-    if not isinstance(
-        credits,
-        list
-    ):
+    if not isinstance(credits, list):
         return []
 
     results = []
 
     for credit in credits:
 
-        if not isinstance(
-            credit,
-            dict
-        ):
+        if not isinstance(credit, dict):
             continue
 
-        roles = credit.get(
-            "roles",
-            []
-        )
+        roles = credit.get("roles", [])
 
-        if not isinstance(
-            roles,
-            list
-        ):
+        if not isinstance(roles, list):
             continue
 
         for role in roles:
 
-            if not isinstance(
-                role,
-                dict
-            ):
+            if not isinstance(role, dict):
                 continue
 
-            role_name = role.get(
-                "name",
-                ""
-            )
+            role_name = role.get("name", "")
 
             if not role_matches(
                 role_name,
@@ -856,14 +838,9 @@ def find_roles(menu, wanted):
             ):
                 continue
 
-            staff = role.get(
-                "staff"
-            )
+            staff = role.get("staff")
 
-            if isinstance(
-                staff,
-                int
-            ):
+            if isinstance(staff, int):
 
                 results.append(
                     str(staff)
@@ -871,27 +848,18 @@ def find_roles(menu, wanted):
 
                 continue
 
-            if not isinstance(
-                staff,
-                list
-            ):
+            if not isinstance(staff, list):
                 continue
 
             for person in staff:
 
-                name = get_staff_name(
-                    person
-                )
+                name = get_staff_name(person)
 
                 if name:
-                    results.append(
-                        name
-                    )
+                    results.append(name)
 
     return list(
-        dict.fromkeys(
-            results
-        )
+        dict.fromkeys(results)
     )
 
 
@@ -901,56 +869,32 @@ def find_roles(menu, wanted):
 
 def get_2ka_count(menu):
 
-    if not isinstance(
-        menu,
-        dict
-    ):
+    if not isinstance(menu, dict):
         return 0
 
-    credits = menu.get(
-        "credits",
-        []
-    )
+    credits = menu.get("credits", [])
 
-    if not isinstance(
-        credits,
-        list
-    ):
+    if not isinstance(credits, list):
         return 0
 
     total = 0
 
     for credit in credits:
 
-        if not isinstance(
-            credit,
-            dict
-        ):
+        if not isinstance(credit, dict):
             continue
 
-        roles = credit.get(
-            "roles",
-            []
-        )
+        roles = credit.get("roles", [])
 
-        if not isinstance(
-            roles,
-            list
-        ):
+        if not isinstance(roles, list):
             continue
 
         for role in roles:
 
-            if not isinstance(
-                role,
-                dict
-            ):
+            if not isinstance(role, dict):
                 continue
 
-            role_name = role.get(
-                "name",
-                ""
-            )
+            role_name = role.get("name", "")
 
             if not role_matches(
                 role_name,
@@ -958,25 +902,15 @@ def get_2ka_count(menu):
             ):
                 continue
 
-            staff = role.get(
-                "staff"
-            )
+            staff = role.get("staff")
 
-            if isinstance(
-                staff,
-                int
-            ):
+            if isinstance(staff, int):
 
                 total += staff
 
-            elif isinstance(
-                staff,
-                list
-            ):
+            elif isinstance(staff, list):
 
-                total += len(
-                    staff
-                )
+                total += len(staff)
 
     return total
 
@@ -987,73 +921,44 @@ def get_2ka_count(menu):
 
 def get_artist(menu):
 
-    if not isinstance(
-        menu,
-        dict
-    ):
+    if not isinstance(menu, dict):
         return []
 
-    credits = menu.get(
-        "credits",
-        []
-    )
+    credits = menu.get("credits", [])
 
-    if not isinstance(
-        credits,
-        list
-    ):
+    if not isinstance(credits, list):
         return []
 
     artists = []
 
     for credit in credits:
 
-        if not isinstance(
-            credit,
-            dict
-        ):
+        if not isinstance(credit, dict):
             continue
 
-        roles = credit.get(
-            "roles",
-            []
-        )
+        roles = credit.get("roles", [])
 
-        if not isinstance(
-            roles,
-            list
-        ):
+        if not isinstance(roles, list):
             continue
 
         for role in roles:
 
-            if not isinstance(
-                role,
-                dict
-            ):
+            if not isinstance(role, dict):
                 continue
 
             role_name = normalize(
-                role.get(
-                    "name",
-                    ""
-                )
+                role.get("name", "")
             )
 
-            # ------------------------------------------------
             # Explicit Artist role
-            # ------------------------------------------------
 
             is_artist = role_matches(
                 role_name,
                 "artist"
             )
 
-            # ------------------------------------------------
-            # Song role
-            #
-            # KFSL may use Song to store the performing artist.
-            # ------------------------------------------------
+            # KFSL commonly stores opening/ending
+            # performers under "Song".
 
             is_song = (
                 role_name == "song"
@@ -1061,8 +966,7 @@ def get_artist(menu):
 
             if not (
                 is_artist
-                or
-                is_song
+                or is_song
             ):
                 continue
 
@@ -1071,27 +975,18 @@ def get_artist(menu):
                 []
             )
 
-            if not isinstance(
-                staff,
-                list
-            ):
+            if not isinstance(staff, list):
                 continue
 
             for person in staff:
 
-                name = get_staff_name(
-                    person
-                )
+                name = get_staff_name(person)
 
                 if name:
-                    artists.append(
-                        name
-                    )
+                    artists.append(name)
 
     return list(
-        dict.fromkeys(
-            artists
-        )
+        dict.fromkeys(artists)
     )
 
 
@@ -1099,101 +994,105 @@ def get_artist(menu):
 # COMBINED SB / ED
 # ============================================================
 
-def add_combined_sb_ed(
-    menu,
-    result
-):
+def add_combined_sb_ed(menu, result):
 
-    if not isinstance(
-        menu,
-        dict
-    ):
+    if not isinstance(menu, dict):
         return
 
-    credits = menu.get(
-        "credits",
-        []
-    )
+    credits = menu.get("credits", [])
 
-    if not isinstance(
-        credits,
-        list
-    ):
+    if not isinstance(credits, list):
         return
 
     for credit in credits:
 
-        if not isinstance(
-            credit,
-            dict
-        ):
+        if not isinstance(credit, dict):
             continue
 
-        roles = credit.get(
-            "roles",
-            []
-        )
+        roles = credit.get("roles", [])
 
-        if not isinstance(
-            roles,
-            list
-        ):
+        if not isinstance(roles, list):
             continue
 
         for role in roles:
 
-            if not isinstance(
-                role,
-                dict
-            ):
+            if not isinstance(role, dict):
                 continue
 
             role_name = normalize(
-                role.get(
-                    "name",
-                    ""
-                )
+                role.get("name", "")
             )
 
+            staff = role.get(
+                "staff",
+                []
+            )
+
+            if not isinstance(staff, list):
+                continue
+
+            names = []
+
+            for person in staff:
+
+                name = get_staff_name(person)
+
+                if name:
+                    names.append(name)
+
+            if not names:
+                continue
+
+            # ------------------------------------------------
+            # Storyboard / Unit Director
+            #
+            # KFSL example:
+            #
+            # Storyboard / Unit Director
+            # Shingo Yamashita
+            #
+            # This is treated as BOTH:
+            #
+            # SB = Shingo Yamashita
+            # ED = Shingo Yamashita
+            # ------------------------------------------------
+
             if (
-                "storyboard"
-                in role_name
+                "storyboard" in role_name
                 and
-                "episode director"
-                in role_name
+                "unit director" in role_name
             ):
 
-                staff = role.get(
-                    "staff",
-                    []
+                result["SB"].extend(names)
+                result["ED"].extend(names)
+
+                continue
+
+            # ------------------------------------------------
+            # Storyboard
+            # ------------------------------------------------
+
+            if role_matches(
+                role_name,
+                "sb"
+            ):
+
+                result["SB"].extend(names)
+
+            # ------------------------------------------------
+            # Episode / Unit Director
+            # ------------------------------------------------
+
+            if (
+                role_matches(
+                    role_name,
+                    "ed"
                 )
+                or
+                "unit director" in role_name
+            ):
 
-                if not isinstance(
-                    staff,
-                    list
-                ):
-                    continue
-
-                names = []
-
-                for person in staff:
-
-                    name = get_staff_name(
-                        person
-                    )
-
-                    if name:
-                        names.append(
-                            name
-                        )
-
-                result["SB"].extend(
-                    names
-                )
-
-                result["ED"].extend(
-                    names
-                )
+                result["ED"].extend(names)
 
 
 # ============================================================
@@ -1288,9 +1187,7 @@ def extract_episode_staff(
         result
     )
 
-    clean_result(
-        result
-    )
+    clean_result(result)
 
     useful = any(
         result[key]
@@ -1323,9 +1220,7 @@ def extract_theme_staff(
     target
 ):
 
-    target = normalize(
-        target
-    )
+    target = normalize(target)
 
     menu = find_menu(
         data,
@@ -1340,16 +1235,6 @@ def extract_theme_staff(
         )
 
         return None
-
-    # --------------------------------------------------------
-    # OP / ED get the SAME STAFF roles as normal episodes.
-    #
-    # PLUS:
-    #
-    # Artist
-    # CAD
-    # CD
-    # --------------------------------------------------------
 
     result = {
 
@@ -1397,14 +1282,20 @@ def extract_theme_staff(
         ),
     }
 
+    # IMPORTANT:
+    #
+    # Handles:
+    #
+    # Storyboard / Unit Director
+    #
+    # as both SB and ED.
+
     add_combined_sb_ed(
         menu,
         result
     )
 
-    clean_result(
-        result
-    )
+    clean_result(result)
 
     useful = any(
         result[key]
@@ -1433,9 +1324,7 @@ def extract_theme_staff(
 # EXACT FILE
 # ============================================================
 
-def get_exact_file(
-    anime_slug
-):
+def get_exact_file(anime_slug):
 
     filename = (
         anime_slug
@@ -1447,9 +1336,7 @@ def get_exact_file(
         filename
     )
 
-    if os.path.isfile(
-        path
-    ):
+    if os.path.isfile(path):
 
         return filename
 
@@ -1460,9 +1347,7 @@ def get_exact_file(
 # FALLBACK FILE SEARCH
 # ============================================================
 
-def find_matching_files(
-    anime_slug
-):
+def find_matching_files(anime_slug):
 
     exact = get_exact_file(
         anime_slug
@@ -1479,13 +1364,9 @@ def find_matching_files(
 
     matches = []
 
-    for filename in os.listdir(
-        BASE_DIR
-    ):
+    for filename in os.listdir(BASE_DIR):
 
-        if not filename.endswith(
-            ".json"
-        ):
+        if not filename.endswith(".json"):
             continue
 
         if filename == "anime_index.json":
@@ -1525,9 +1406,7 @@ def find_matching_files(
 # PARSE EPISODE INPUT
 # ============================================================
 
-def parse_episode_input(
-    episode
-):
+def parse_episode_input(episode):
 
     if episode is None:
         return None
@@ -1538,15 +1417,6 @@ def parse_episode_input(
 
     # --------------------------------------------------------
     # OP / ED
-    #
-    # Accept:
-    #
-    # op1
-    # op 1
-    # OP1
-    # OP 1
-    # ed1
-    # ed 1
     # --------------------------------------------------------
 
     match = re.fullmatch(
@@ -1562,9 +1432,7 @@ def parse_episode_input(
             match.group(2)
         )
 
-        return (
-            f"{kind}{number}"
-        )
+        return f"{kind}{number}"
 
     # --------------------------------------------------------
     # Normal episode
@@ -1572,9 +1440,7 @@ def parse_episode_input(
 
     if value.isdigit():
 
-        return int(
-            value
-        )
+        return int(value)
 
     return None
 
@@ -1608,33 +1474,17 @@ def get_staff(
             "ERROR: Invalid episode."
         )
 
+        print()
         print(
             "Use:"
         )
 
-        print(
-            "  1"
-        )
-
-        print(
-            "  12"
-        )
-
-        print(
-            "  op1"
-        )
-
-        print(
-            "  op2"
-        )
-
-        print(
-            "  ed1"
-        )
-
-        print(
-            "  ed2"
-        )
+        print("  1")
+        print("  12")
+        print("  op1")
+        print("  op2")
+        print("  ed1")
+        print("  ed2")
 
         return None
 
@@ -1821,19 +1671,6 @@ if __name__ == "__main__":
     except ValueError:
 
         season = 1
-
-    # IMPORTANT:
-    #
-    # Keep this as STRING.
-    #
-    # It accepts:
-    #
-    # 1
-    # 12
-    # op1
-    # op2
-    # ed1
-    # ed2
 
     episode = input(
         "Episode / OP / ED: "

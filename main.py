@@ -1,6 +1,4 @@
 import os
-import re
-
 import discord
 
 from dotenv import load_dotenv
@@ -20,12 +18,9 @@ from staff_scraper import (
 
 load_dotenv()
 
-TOKEN = os.getenv(
-    "DISCORD_TOKEN"
-)
+TOKEN = os.getenv("DISCORD_TOKEN")
 
 if not TOKEN:
-
     raise RuntimeError(
         "DISCORD_TOKEN is missing.\n"
         "Create a .env file containing:\n"
@@ -62,84 +57,49 @@ EMBED_COLOR = discord.Color.from_rgb(
 
 def detect_season(anime):
 
-    normalized = normalize(
-        anime
-    )
+    normalized = normalize(anime)
 
     if normalized in ANIME_ALIASES:
 
-        alias_slug = ANIME_ALIASES[
-            normalized
-        ]
+        alias_slug = ANIME_ALIASES[normalized]
 
         # Frieren
-        if (
-            alias_slug
-            == "sousou-no-frieren-2nd-season"
-        ):
+        if alias_slug == "sousou-no-frieren-2nd-season":
             return 2
 
         # MHA
-        for number in range(
-            2,
-            8
-        ):
+        for number in range(2, 8):
 
-            if alias_slug == (
-                f"my-hero-academia-{number}"
-            ):
-
+            if alias_slug == f"my-hero-academia-{number}":
                 return number
 
-        if (
-            alias_slug
-            == "my-hero-academia-final-season"
-        ):
-
+        if alias_slug == "my-hero-academia-final-season":
             return 8
 
         # JJK
-        if (
-            alias_slug
-            == "jujutsu-kaisen-2nd-season"
-        ):
+        if alias_slug == "jujutsu-kaisen":
+            return 1
+
+        if alias_slug == "jujutsu-kaisen-2nd-season":
             return 2
 
-        if (
-            alias_slug
-            == "jujutsu-kaisen-3rd-season-culling-game-part-1"
-        ):
+        if alias_slug == "jujutsu-kaisen-3rd-season-culling-game-part-1":
             return 3
 
-        if (
-            alias_slug
-            == "jujutsu-kaisen-4th-season-culling-game-part-2"
-        ):
+        if alias_slug == "jujutsu-kaisen-4th-season-culling-game-part-2":
             return 4
 
         # Bleach TYBW
-        if (
-            alias_slug
-            == "bleach-thousand-year-blood-war"
-        ):
+        if alias_slug == "bleach-thousand-year-blood-war":
             return 1
 
-        if (
-            alias_slug
-            == "bleach-thousand-year-blood-war-the-separation"
-        ):
+        if alias_slug == "bleach-thousand-year-blood-war-the-separation":
             return 2
 
-        if (
-            alias_slug
-            == "bleach-thousand-year-blood-war-the-conflict"
-        ):
+        if alias_slug == "bleach-thousand-year-blood-war-the-conflict":
             return 3
 
-        if (
-            alias_slug
-            == "bleach-thousand-year-blood-war-the-calamity"
-        ):
+        if alias_slug == "bleach-thousand-year-blood-war-the-calamity":
             return 4
 
         # Mob
@@ -166,10 +126,7 @@ def detect_season(anime):
         if alias_slug == "solo-leveling":
             return 1
 
-        if (
-            alias_slug
-            == "solo-leveling-season-2-arise-from-the-shadow"
-        ):
+        if alias_slug == "solo-leveling-season-2-arise-from-the-shadow":
             return 2
 
         # Naruto
@@ -179,9 +136,7 @@ def detect_season(anime):
         if alias_slug == "naruto-shippuuden":
             return 2
 
-    # --------------------------------------------------------
-    # Direct text fallback
-    # --------------------------------------------------------
+    import re
 
     match = re.search(
         r"(?:season|s)\s*(\d+)",
@@ -191,13 +146,9 @@ def detect_season(anime):
     if match:
 
         try:
-
-            return int(
-                match.group(1)
-            )
+            return int(match.group(1))
 
         except ValueError:
-
             pass
 
     return 1
@@ -213,9 +164,7 @@ def format_names(names):
         return None
 
     names = list(
-        dict.fromkeys(
-            names
-        )
+        dict.fromkeys(names)
     )
 
     return ", ".join(
@@ -228,19 +177,12 @@ def format_names(names):
 # SPLIT LONG FIELD
 # ============================================================
 
-def split_text(
-    text,
-    limit=1024
-):
+def split_text(text, limit=1024):
 
     if len(text) <= limit:
-
-        return [
-            text
-        ]
+        return [text]
 
     parts = []
-
     current = ""
 
     pieces = [
@@ -257,31 +199,17 @@ def split_text(
 
             current = piece
 
-        elif (
-            len(current)
-            + len(piece)
-            + 2
-            <= limit
-        ):
+        elif len(current) + len(piece) + 2 <= limit:
 
-            current += (
-                ", "
-                + piece
-            )
+            current += ", " + piece
 
         else:
 
-            parts.append(
-                current
-            )
-
+            parts.append(current)
             current = piece
 
     if current:
-
-        parts.append(
-            current
-        )
+        parts.append(current)
 
     return parts
 
@@ -300,9 +228,7 @@ def add_staff_fields(
     if not names:
         return
 
-    text = format_names(
-        names
-    )
+    text = format_names(names)
 
     if not text:
         return
@@ -312,15 +238,11 @@ def add_staff_fields(
         1024
     )
 
-    for index, chunk in enumerate(
-        chunks
-    ):
+    for index, chunk in enumerate(chunks):
 
         if index == 0:
 
-            field_name = (
-                f"{emoji} {title}"
-            )
+            field_name = f"{emoji} {title}"
 
         else:
 
@@ -344,32 +266,22 @@ def add_staff_fields(
 async def on_ready():
 
     print()
-    print(
-        "=" * 60
-    )
-
-    print(
-        f"Logged in as {bot.user}"
-    )
-
-    print(
-        "=" * 60
-    )
+    print("=" * 60)
+    print(f"Logged in as {bot.user}")
+    print("=" * 60)
 
     try:
 
         synced = await bot.tree.sync()
 
         print(
-            f"Synced {len(synced)} "
-            f"slash commands."
+            f"Synced {len(synced)} slash commands."
         )
 
     except Exception as e:
 
         print(
-            f"Command sync error: "
-            f"{e!r}"
+            f"Command sync error: {e!r}"
         )
 
 
@@ -383,7 +295,7 @@ async def on_ready():
 )
 @app_commands.describe(
     anime="Anime name or shortcut",
-    episode="Episode number, OP1/OP2, or ED1/ED2"
+    episode="Episode number, OP1, OP2, ED1, ED2, etc."
 )
 async def staff(
     interaction: discord.Interaction,
@@ -394,57 +306,29 @@ async def staff(
     await interaction.response.defer()
 
     # --------------------------------------------------------
-    # Validate episode here.
-    #
     # IMPORTANT:
     #
-    # episode MUST be str.
+    # episode MUST be a STRING.
     #
-    # Otherwise Discord itself rejects:
+    # This allows:
     #
+    # 1
+    # 12
     # op1
     # op2
     # ed1
     # ed2
+    #
+    # Discord will no longer reject op2 as "not a valid integer".
     # --------------------------------------------------------
 
-    episode_value = episode.strip().lower()
+    episode = episode.strip()
 
-    valid_episode = False
-
-    # Normal number
-
-    if episode_value.isdigit():
-
-        if int(episode_value) >= 1:
-
-            valid_episode = True
-
-    # OP / ED
-
-    elif re.fullmatch(
-        r"(op|ed)\s*\d+",
-        episode_value
-    ):
-
-        number_match = re.search(
-            r"\d+",
-            episode_value
-        )
-
-        if number_match:
-
-            if int(
-                number_match.group()
-            ) >= 1:
-
-                valid_episode = True
-
-    if not valid_episode:
+    if not episode:
 
         await interaction.followup.send(
-            "❌ Invalid episode.\n\n"
-            "Use:\n"
+            "❌ Please enter an episode number or OP/ED.\n\n"
+            "Examples:\n"
             "`1`\n"
             "`12`\n"
             "`op1`\n"
@@ -455,45 +339,66 @@ async def staff(
 
         return
 
-    season = detect_season(
-        anime
-    )
+    # --------------------------------------------------------
+    # Normal numeric episode validation
+    # --------------------------------------------------------
+
+    if episode.isdigit():
+
+        episode_number = int(episode)
+
+        if episode_number < 1:
+
+            await interaction.followup.send(
+                "❌ Episode must be 1 or higher."
+            )
+
+            return
+
+    else:
+
+        normalized_episode = normalize(
+            episode
+        )
+
+        import re
+
+        if not re.fullmatch(
+            r"(op|ed)\s*\d+",
+            normalized_episode
+        ):
+
+            await interaction.followup.send(
+                "❌ Invalid episode.\n\n"
+                "Use something like:\n"
+                "`1`\n"
+                "`12`\n"
+                "`op1`\n"
+                "`op2`\n"
+                "`ed1`\n"
+                "`ed2`"
+            )
+
+            return
+
+    season = detect_season(anime)
 
     print()
-    print(
-        "=" * 60
-    )
+    print("=" * 60)
+    print("STAFF DISCORD COMMAND")
+    print("=" * 60)
 
-    print(
-        "STAFF DISCORD COMMAND"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    print(
-        f"Input:   {anime}"
-    )
-
-    print(
-        f"Season:  {season}"
-    )
-
-    print(
-        f"Episode: {episode_value}"
-    )
-
-    print(
-        "=" * 60
-    )
+    print(f"Input:   {anime}")
+    print(f"Season:  {season}")
+    print(f"Episode: {episode}")
+    print("=" * 60)
 
     try:
 
         data = get_staff(
             anime,
             season,
-            episode_value
+            episode
         )
 
     except Exception as e:
@@ -517,13 +422,13 @@ async def staff(
     if not data:
 
         embed = discord.Embed(
-            title="Staff Credits",
+            title="Episode Staff Credits",
             description=(
                 f"**{anime}** — "
                 f"Season {season} "
-                f"Episode {episode_value}\n\n"
+                f"Episode {episode}\n\n"
                 "**No relevant staff "
-                "credits found for this entry.**"
+                "credits found for this episode.**"
             ),
             color=EMBED_COLOR
         )
@@ -542,44 +447,34 @@ async def staff(
     # TITLE
     # ========================================================
 
-    if (
-        isinstance(
-            episode_value,
-            str
+    is_theme = (
+        isinstance(episode, str)
+        and episode.lower().startswith(
+            ("op", "ed")
         )
-        and episode_value.startswith(
-            "op"
-        )
-    ):
+    )
 
-        title_text = "Opening Staff"
+    if is_theme:
 
-    elif (
-        isinstance(
-            episode_value,
-            str
-        )
-        and episode_value.startswith(
-            "ed"
-        )
-    ):
-
-        title_text = "Ending Staff"
+        if episode.lower().startswith("op"):
+            title = "Opening Staff"
+        else:
+            title = "Ending Staff"
 
     else:
 
-        title_text = "Episode Staff Credits"
+        title = "Episode Staff Credits"
 
     # ========================================================
     # EMBED
     # ========================================================
 
     embed = discord.Embed(
-        title=title_text,
+        title=title,
         description=(
             f"**{anime}** — "
             f"Season {season} "
-            f"Episode {episode_value}"
+            f"Episode {episode}"
         ),
         color=EMBED_COLOR
     )
@@ -747,6 +642,4 @@ async def staff(
 # RUN
 # ============================================================
 
-bot.run(
-    TOKEN
-)
+bot.run(TOKEN)
