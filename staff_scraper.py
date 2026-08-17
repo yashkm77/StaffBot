@@ -471,6 +471,7 @@ ANIME_ALIASES = {
         "ousama-ranking-yuuki-no-takarabako",
 }
 
+
 # ============================================================
 # NORMALIZATION
 # ============================================================
@@ -588,6 +589,8 @@ ROLE_ALIASES = {
         "storyboards",
         "storyboard / unit director",
         "storyboard/unit director",
+        "storyboard / episode director",
+        "storyboard/episode director",
         "絵コンテ",
     ],
 
@@ -597,11 +600,14 @@ ROLE_ALIASES = {
         "unit director",
         "storyboard / unit director",
         "storyboard/unit director",
+        "storyboard / episode director",
+        "storyboard/episode director",
         "演出",
     ],
 
     "ad": [
         "animation director",
+        "animation direction",
         "作画監督",
     ],
 
@@ -623,6 +629,8 @@ ROLE_ALIASES = {
         "2nd key animator",
         "second key animation",
         "second key animator",
+        "2nd key",
+        "second key",
         "第二原画",
     ],
 
@@ -659,26 +667,18 @@ def role_matches(role_name, wanted):
 
     role = normalize(role_name)
 
-    # --------------------------------------------------------
     # Direct match
-    # --------------------------------------------------------
-
-    if role == wanted:
+    if role == normalize(wanted):
         return True
 
-    # --------------------------------------------------------
     # Exact aliases
-    # --------------------------------------------------------
-
     for alias in ROLE_ALIASES.get(wanted, []):
 
-        alias_normalized = normalize(alias)
-
-        if role == alias_normalized:
+        if role == normalize(alias):
             return True
 
     # --------------------------------------------------------
-    # Flexible Storyboard matching
+    # Storyboard
     # --------------------------------------------------------
 
     if wanted == "sb":
@@ -686,11 +686,11 @@ def role_matches(role_name, wanted):
         if "storyboard" in role:
             return True
 
-        if "storyboards" in role:
+        if "story board" in role:
             return True
 
     # --------------------------------------------------------
-    # Flexible Episode Director matching
+    # Episode Director
     # --------------------------------------------------------
 
     if wanted == "ed":
@@ -705,7 +705,7 @@ def role_matches(role_name, wanted):
             return True
 
     # --------------------------------------------------------
-    # Flexible 2nd Key Animation matching
+    # 2nd Key Animation
     # --------------------------------------------------------
 
     if wanted == "2ka":
@@ -717,6 +717,15 @@ def role_matches(role_name, wanted):
             return True
 
         if "2nd key animator" in role:
+            return True
+
+        if "second key animator" in role:
+            return True
+
+        if "2nd key" in role:
+            return True
+
+        if "second key" in role:
             return True
 
     return False
@@ -738,9 +747,9 @@ def find_menu(data, target):
 
     target = normalize(target)
 
-    # --------------------------------------------------------
-    # Direct menu match
-    # --------------------------------------------------------
+    # ========================================================
+    # DIRECT MATCH
+    # ========================================================
 
     for menu in menus:
 
@@ -754,9 +763,22 @@ def find_menu(data, target):
         if name == target:
             return menu
 
-    # --------------------------------------------------------
-    # OP / ED formatting
-    # --------------------------------------------------------
+    # ========================================================
+    # OP / ED
+    #
+    # Important:
+    #
+    # Some files:
+    # OP
+    # ED
+    #
+    # Others:
+    # OP1
+    # OP2
+    # ED1
+    #
+    # Support both.
+    # ========================================================
 
     theme_match = re.fullmatch(
         r"(op|ed)\s*(\d+)",
@@ -796,6 +818,7 @@ def find_menu(data, target):
                 f"ending{number:02d}",
             })
 
+        # Try OP1 / ED1 style first
         for menu in menus:
 
             if not isinstance(menu, dict):
@@ -808,9 +831,72 @@ def find_menu(data, target):
             if name in possible:
                 return menu
 
-    # --------------------------------------------------------
-    # Episode number
-    # --------------------------------------------------------
+        # ----------------------------------------------------
+        # IMPORTANT FALLBACK
+        #
+        # If user requests OP1 but file only has OP,
+        # use OP when it is the only opening menu.
+        # Same for ED1.
+        # ----------------------------------------------------
+
+        simple_theme = kind
+
+        simple_matches = []
+
+        for menu in menus:
+
+            if not isinstance(menu, dict):
+                continue
+
+            name = normalize(
+                menu.get("name", "")
+            )
+
+            if name == simple_theme:
+                simple_matches.append(menu)
+
+        if len(simple_matches) == 1:
+
+            return simple_matches[0]
+
+        # If there is only one opening/ending menu and
+        # the requested number is 1, use it.
+
+        if number == 1:
+
+            theme_candidates = []
+
+            for menu in menus:
+
+                if not isinstance(menu, dict):
+                    continue
+
+                name = normalize(
+                    menu.get("name", "")
+                )
+
+                if kind == "op":
+
+                    if (
+                        name == "op"
+                        or name.startswith("opening")
+                    ):
+                        theme_candidates.append(menu)
+
+                else:
+
+                    if (
+                        name == "ed"
+                        or name.startswith("ending")
+                    ):
+                        theme_candidates.append(menu)
+
+            if len(theme_candidates) == 1:
+                return theme_candidates[0]
+
+    # ========================================================
+    # NORMAL EPISODE
+    # ========================================================
 
     if target.isdigit():
 
@@ -860,9 +946,27 @@ def find_menu(data, target):
                 if int(match.group(1)) == episode:
                     return menu
 
-        # Movie fallback
+        # ----------------------------------------------------
+        # SPECIAL / MOVIE FALLBACK
+        #
+        # Some movies/specials have:
+        #
+        # Special
+        #
+        # instead of:
+        #
+        # #01
+        #
+        # This allows:
+        #
+        # one piece fan letter 1
+        #
+        # to find "Special".
+        # ----------------------------------------------------
 
         if episode == 1:
+
+            special_candidates = []
 
             for menu in menus:
 
@@ -873,8 +977,20 @@ def find_menu(data, target):
                     menu.get("name", "")
                 )
 
-                if name == "movie":
-                    return menu
+                if name in {
+                    "special",
+                    "movie",
+                    "film",
+                    "ova",
+                    "special episode",
+                    "special edition",
+                }:
+
+                    special_candidates.append(menu)
+
+            if len(special_candidates) == 1:
+
+                return special_candidates[0]
 
     return None
 
@@ -920,6 +1036,7 @@ def find_roles(menu, wanted):
 
             staff = role.get("staff")
 
+            # Some data can theoretically contain a number.
             if isinstance(staff, int):
 
                 results.append(
@@ -1030,16 +1147,13 @@ def get_artist(menu):
                 role.get("name", "")
             )
 
-            # Explicit Artist role
-
             is_artist = role_matches(
                 role_name,
                 "artist"
             )
 
-            # KFSL commonly stores opening/ending
-            # performers under "Song".
-
+            # Opening/ending singers are sometimes
+            # stored under "Song".
             is_song = (
                 role_name == "song"
             )
@@ -1123,48 +1237,39 @@ def add_combined_sb_ed(menu, result):
             if not names:
                 continue
 
-                        # ------------------------------------------------
-            # Storyboard / Episode Director
-            #
-            # KFSL can use several different role names.
-            # Handle all common variations.
-            # ------------------------------------------------
-
             role_lower = role_name.lower()
 
+            # ------------------------------------------------
             # Storyboard + Unit Director
-            if (
+            # ------------------------------------------------
+
+            is_combined = (
                 "storyboard" in role_lower
                 and "unit director" in role_lower
-            ):
-                result["SB"].extend(names)
-                result["ED"].extend(names)
-                continue
+            )
 
-            # Storyboard
-            if (
+            # ------------------------------------------------
+            # Storyboard + Episode Director
+            # ------------------------------------------------
+
+            is_sb_ed = (
                 "storyboard" in role_lower
-                or role_matches(role_name, "sb")
-            ):
-                result["SB"].extend(names)
-
-            # Episode Director / Episode Direction
-            if (
-                "episode director" in role_lower
-                or "episode direction" in role_lower
-                or role_matches(role_name, "ed")
-            ):
-                result["ED"].extend(names)
-
-            # Unit Director
-            if "unit director" in role_lower:
-                result["ED"].extend(names)
-
-                continue
+                and (
+                    "episode director" in role_lower
+                    or "episode direction" in role_lower
+                )
+            )
 
             # ------------------------------------------------
             # Storyboard
             # ------------------------------------------------
+
+            if is_combined or is_sb_ed:
+
+                result["SB"].extend(names)
+                result["ED"].extend(names)
+
+                continue
 
             if role_matches(
                 role_name,
@@ -1174,16 +1279,12 @@ def add_combined_sb_ed(menu, result):
                 result["SB"].extend(names)
 
             # ------------------------------------------------
-            # Episode / Unit Director
+            # Episode Director
             # ------------------------------------------------
 
-            if (
-                role_matches(
-                    role_name,
-                    "ed"
-                )
-                or
-                "unit director" in role_name
+            if role_matches(
+                role_name,
+                "ed"
             ):
 
                 result["ED"].extend(names)
@@ -1375,14 +1476,6 @@ def extract_theme_staff(
             menu
         ),
     }
-
-    # IMPORTANT:
-    #
-    # Handles:
-    #
-    # Storyboard / Unit Director
-    #
-    # as both SB and ED.
 
     add_combined_sb_ed(
         menu,
@@ -1633,9 +1726,9 @@ def get_staff(
             f"score={score}"
         )
 
-    # --------------------------------------------------------
-    # Try files
-    # --------------------------------------------------------
+    # ========================================================
+    # TRY FILES
+    # ========================================================
 
     for score, filename in matches:
 
