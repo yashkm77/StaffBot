@@ -23,8 +23,11 @@ ANIME_ALIASES = {
     "jjk": "jujutsu-kaisen",
     "jujutsu kaisen": "jujutsu-kaisen",
 
-    "jjk s1": "jujutsu-kaisen-0",
+    "jjk s1": "jujutsu-kaisen",
+    "jujutsu kaisen s1": "jujutsu-kaisen",
+
     "jjk 0": "jujutsu-kaisen-0",
+    "jujutsu kaisen 0": "jujutsu-kaisen-0",
 
     "jjk s2": "jujutsu-kaisen-2nd-season",
     "jujutsu kaisen s2": "jujutsu-kaisen-2nd-season",
@@ -406,11 +409,7 @@ def normalize(text):
     text = text.replace("–", "-")
     text = text.replace("—", "-")
 
-    text = re.sub(
-        r"\s+",
-        " ",
-        text
-    )
+    text = re.sub(r"\s+", " ", text)
 
     return text
 
@@ -421,20 +420,12 @@ def normalize(text):
 
 def resolve_alias(anime):
 
-    anime_normalized = normalize(
-        anime
-    )
+    anime_normalized = normalize(anime)
 
     if anime_normalized in ANIME_ALIASES:
+        return ANIME_ALIASES[anime_normalized]
 
-        return ANIME_ALIASES[
-            anime_normalized
-        ]
-
-    return anime_normalized.replace(
-        " ",
-        "-"
-    )
+    return anime_normalized.replace(" ", "-")
 
 
 # ============================================================
@@ -473,86 +464,43 @@ def load_json(path):
 
 def get_staff_name(person):
 
-    if not isinstance(
-        person,
-        dict
-    ):
+    if not isinstance(person, dict):
         return None
 
-    pn = person.get(
-        "pn"
-    )
+    pn = person.get("pn")
 
-    if isinstance(
-        pn,
-        dict
-    ):
+    if isinstance(pn, dict):
 
-        pn_en = pn.get(
-            "en"
-        )
+        pn_en = pn.get("en")
 
-        if pn_en and str(
-            pn_en
-        ).strip():
+        if pn_en and str(pn_en).strip():
+            return str(pn_en).strip()
 
-            return str(
-                pn_en
-            ).strip()
+        pn_ja = pn.get("ja")
 
-        pn_ja = pn.get(
-            "ja"
-        )
+        if pn_ja and str(pn_ja).strip():
+            return str(pn_ja).strip()
 
-        if pn_ja and str(
-            pn_ja
-        ).strip():
+    en = person.get("en")
 
-            return str(
-                pn_ja
-            ).strip()
+    if en and str(en).strip():
+        return str(en).strip()
 
-    en = person.get(
-        "en"
-    )
+    ja = person.get("ja")
 
-    if en and str(
-        en
-    ).strip():
+    if ja and str(ja).strip():
+        return str(ja).strip()
 
-        return str(
-            en
-        ).strip()
+    name = person.get("name")
 
-    ja = person.get(
-        "ja"
-    )
-
-    if ja and str(
-        ja
-    ).strip():
-
-        return str(
-            ja
-        ).strip()
-
-    name = person.get(
-        "name"
-    )
-
-    if name and str(
-        name
-    ).strip():
-
-        return str(
-            name
-        ).strip()
+    if name and str(name).strip():
+        return str(name).strip()
 
     return None
 
 
 # ============================================================
-# ROLE MATCHING
+# ROLE ALIASES
 # ============================================================
 
 ROLE_ALIASES = {
@@ -561,15 +509,12 @@ ROLE_ALIASES = {
         "storyboard",
         "story board",
         "storyboards",
-        "storyboard / episode director",
-        "storyboard / unit director",
         "絵コンテ",
     ],
 
     "ed": [
         "episode director",
         "episode direction",
-        "episode direction cooperation",
         "演出",
     ],
 
@@ -601,35 +546,36 @@ ROLE_ALIASES = {
 
     "cad": [
         "chief animation director",
-        "chief animation director(s)",
+        "chief animation directors",
+        "chief animation direction",
         "総作画監督",
     ],
 
     "cd": [
         "character design",
+        "character designs",
         "character designer",
         "キャラクターデザイン",
     ],
 
     "artist": [
-        "song",
         "artist",
-        "歌",
+        "歌手",
+        "アーティスト",
     ],
 }
 
 
-def role_matches(
-    role_name,
-    wanted
-):
+# ============================================================
+# ROLE MATCHING
+# ============================================================
+
+def role_matches(role_name, wanted):
 
     if not role_name:
         return False
 
-    role = normalize(
-        role_name
-    )
+    role = normalize(role_name)
 
     if role == wanted:
         return True
@@ -639,77 +585,19 @@ def role_matches(
         []
     ):
 
-        if role == normalize(
-            alias
-        ):
+        if role == normalize(alias):
             return True
 
     return False
 
 
 # ============================================================
-# GET STAFF FROM ROLE
+# FIND MENU
 # ============================================================
 
-def get_staff_from_role(
-    role
-):
+def find_menu(data, target):
 
-    if not isinstance(
-        role,
-        dict
-    ):
-        return []
-
-    staff = role.get(
-        "staff"
-    )
-
-    if isinstance(
-        staff,
-        int
-    ):
-
-        return [
-            str(staff)
-        ]
-
-    if not isinstance(
-        staff,
-        list
-    ):
-        return []
-
-    results = []
-
-    for person in staff:
-
-        name = get_staff_name(
-            person
-        )
-
-        if name:
-
-            results.append(
-                name
-            )
-
-    return results
-
-
-# ============================================================
-# FIND EPISODE MENU
-# ============================================================
-
-def find_episode_menu(
-    data,
-    episode
-):
-
-    if not isinstance(
-        data,
-        dict
-    ):
+    if not isinstance(data, dict):
         return None
 
     menus = data.get(
@@ -723,176 +611,10 @@ def find_episode_menu(
     ):
         return None
 
-    # --------------------------------------------------------
-    # OP / ED
-    #
-    # episode can be:
-    #
-    # op1
-    # op2
-    # ed1
-    # ed2
-    # --------------------------------------------------------
-
-    if isinstance(
-        episode,
-        str
-    ):
-
-        value = normalize(
-            episode
-        )
-
-        match = re.fullmatch(
-            r"(op|opening|ed|ending)[\s\-]*(\d+)",
-            value
-        )
-
-        if match:
-
-            kind = match.group(
-                1
-            )
-
-            number = int(
-                match.group(2)
-            )
-
-            if kind in (
-                "op",
-                "opening"
-            ):
-
-                wanted_names = [
-                    f"op{number}",
-                    f"op {number}",
-                    f"opening {number}",
-                    f"opening{number}",
-                ]
-
-            else:
-
-                wanted_names = [
-                    f"ed{number}",
-                    f"ed {number}",
-                    f"ending {number}",
-                    f"ending{number}",
-                ]
-
-            wanted_names = [
-                normalize(x)
-                for x in wanted_names
-            ]
-
-            for menu in menus:
-
-                if not isinstance(
-                    menu,
-                    dict
-                ):
-                    continue
-
-                name = normalize(
-                    menu.get(
-                        "name",
-                        ""
-                    )
-                )
-
-                if name in wanted_names:
-
-                    return menu
-
-            # ------------------------------------------------
-            # More flexible OP / ED fallback
-            # ------------------------------------------------
-
-            for menu in menus:
-
-                if not isinstance(
-                    menu,
-                    dict
-                ):
-                    continue
-
-                name = normalize(
-                    menu.get(
-                        "name",
-                        ""
-                    )
-                )
-
-                if kind in (
-                    "op",
-                    "opening"
-                ):
-
-                    if (
-                        "op" in name
-                        or "opening" in name
-                    ):
-
-                        numbers = re.findall(
-                            r"\d+",
-                            name
-                        )
-
-                        if numbers and int(
-                            numbers[-1]
-                        ) == number:
-
-                            return menu
-
-                else:
-
-                    if (
-                        "ed" in name
-                        or "ending" in name
-                    ):
-
-                        numbers = re.findall(
-                            r"\d+",
-                            name
-                        )
-
-                        if numbers and int(
-                            numbers[-1]
-                        ) == number:
-
-                            return menu
-
-            return None
+    target = normalize(target)
 
     # --------------------------------------------------------
-    # NORMAL EPISODE
-    # --------------------------------------------------------
-
-    try:
-
-        episode_number = int(
-            episode
-        )
-
-    except (
-        ValueError,
-        TypeError
-    ):
-
-        return None
-
-    possible = {
-        f"#{episode_number:02d}",
-        f"#{episode_number}",
-        f"{episode_number:02d}",
-        f"{episode_number}",
-        f"episode {episode_number}",
-        f"episode {episode_number:02d}",
-        f"ep {episode_number}",
-        f"ep {episode_number:02d}",
-    }
-
-    # --------------------------------------------------------
-    # Normal episode menu
+    # Direct menu match
     # --------------------------------------------------------
 
     for menu in menus:
@@ -910,53 +632,56 @@ def find_episode_menu(
             )
         )
 
-        if name in possible:
-
+        if name == target:
             return menu
 
     # --------------------------------------------------------
-    # Numeric fallback
+    # Normalize OP / ED formatting
+    #
+    # op1
+    # op 1
+    # OP1
+    # OP 1
+    # opening 1
+    # opening1
     # --------------------------------------------------------
 
-    for menu in menus:
+    theme_match = re.fullmatch(
+        r"(op|ed)\s*(\d+)",
+        target
+    )
 
-        if not isinstance(
-            menu,
-            dict
-        ):
-            continue
+    if theme_match:
 
-        name = str(
-            menu.get(
-                "name",
-                ""
-            )
-        ).strip()
-
-        match = re.search(
-            r"#?\s*(\d+)",
-            name
+        kind = theme_match.group(1)
+        number = int(
+            theme_match.group(2)
         )
 
-        if match:
+        possible = {
+            f"{kind}{number}",
+            f"{kind} {number}",
+            f"{kind}{number:02d}",
+            f"{kind} {number:02d}",
+        }
 
-            try:
+        if kind == "op":
 
-                if int(
-                    match.group(1)
-                ) == episode_number:
+            possible.update({
+                f"opening {number}",
+                f"opening{number}",
+                f"opening {number:02d}",
+                f"opening{number:02d}",
+            })
 
-                    return menu
+        else:
 
-            except ValueError:
-
-                pass
-
-    # --------------------------------------------------------
-    # MOVIE FALLBACK
-    # --------------------------------------------------------
-
-    if episode_number == 1:
+            possible.update({
+                f"ending {number}",
+                f"ending{number}",
+                f"ending {number:02d}",
+                f"ending{number:02d}",
+            })
 
         for menu in menus:
 
@@ -973,21 +698,106 @@ def find_episode_menu(
                 )
             )
 
-            if name == "movie":
-
+            if name in possible:
                 return menu
+
+    # --------------------------------------------------------
+    # Episode number
+    # --------------------------------------------------------
+
+    if target.isdigit():
+
+        episode = int(target)
+
+        possible = {
+            f"#{episode:02d}",
+            f"#{episode}",
+            f"{episode:02d}",
+            f"{episode}",
+            f"episode {episode}",
+            f"episode {episode:02d}",
+            f"ep {episode}",
+            f"ep {episode:02d}",
+        }
+
+        for menu in menus:
+
+            if not isinstance(
+                menu,
+                dict
+            ):
+                continue
+
+            name = normalize(
+                menu.get(
+                    "name",
+                    ""
+                )
+            )
+
+            if name in possible:
+                return menu
+
+        # Numeric fallback
+
+        for menu in menus:
+
+            if not isinstance(
+                menu,
+                dict
+            ):
+                continue
+
+            name = str(
+                menu.get(
+                    "name",
+                    ""
+                )
+            ).strip()
+
+            match = re.search(
+                r"#?\s*(\d+)",
+                name
+            )
+
+            if match:
+
+                if int(
+                    match.group(1)
+                ) == episode:
+
+                    return menu
+
+        # Movie fallback
+
+        if episode == 1:
+
+            for menu in menus:
+
+                if not isinstance(
+                    menu,
+                    dict
+                ):
+                    continue
+
+                name = normalize(
+                    menu.get(
+                        "name",
+                        ""
+                    )
+                )
+
+                if name == "movie":
+                    return menu
 
     return None
 
 
 # ============================================================
-# FIND ROLE
+# FIND ROLE STAFF
 # ============================================================
 
-def find_roles(
-    menu,
-    wanted
-):
+def find_roles(menu, wanted):
 
     if not isinstance(
         menu,
@@ -1046,11 +856,37 @@ def find_roles(
             ):
                 continue
 
-            results.extend(
-                get_staff_from_role(
-                    role
-                )
+            staff = role.get(
+                "staff"
             )
+
+            if isinstance(
+                staff,
+                int
+            ):
+
+                results.append(
+                    str(staff)
+                )
+
+                continue
+
+            if not isinstance(
+                staff,
+                list
+            ):
+                continue
+
+            for person in staff:
+
+                name = get_staff_name(
+                    person
+                )
+
+                if name:
+                    results.append(
+                        name
+                    )
 
     return list(
         dict.fromkeys(
@@ -1063,9 +899,7 @@ def find_roles(
 # 2KA COUNT
 # ============================================================
 
-def get_2ka_count(
-    menu
-):
+def get_2ka_count(menu):
 
     if not isinstance(
         menu,
@@ -1148,7 +982,244 @@ def get_2ka_count(
 
 
 # ============================================================
-# EXTRACT STAFF
+# ARTIST
+# ============================================================
+
+def get_artist(menu):
+
+    if not isinstance(
+        menu,
+        dict
+    ):
+        return []
+
+    credits = menu.get(
+        "credits",
+        []
+    )
+
+    if not isinstance(
+        credits,
+        list
+    ):
+        return []
+
+    artists = []
+
+    for credit in credits:
+
+        if not isinstance(
+            credit,
+            dict
+        ):
+            continue
+
+        roles = credit.get(
+            "roles",
+            []
+        )
+
+        if not isinstance(
+            roles,
+            list
+        ):
+            continue
+
+        for role in roles:
+
+            if not isinstance(
+                role,
+                dict
+            ):
+                continue
+
+            role_name = normalize(
+                role.get(
+                    "name",
+                    ""
+                )
+            )
+
+            # ------------------------------------------------
+            # Explicit Artist role
+            # ------------------------------------------------
+
+            is_artist = role_matches(
+                role_name,
+                "artist"
+            )
+
+            # ------------------------------------------------
+            # Song role
+            #
+            # KFSL may use Song to store the performing artist.
+            # ------------------------------------------------
+
+            is_song = (
+                role_name == "song"
+            )
+
+            if not (
+                is_artist
+                or
+                is_song
+            ):
+                continue
+
+            staff = role.get(
+                "staff",
+                []
+            )
+
+            if not isinstance(
+                staff,
+                list
+            ):
+                continue
+
+            for person in staff:
+
+                name = get_staff_name(
+                    person
+                )
+
+                if name:
+                    artists.append(
+                        name
+                    )
+
+    return list(
+        dict.fromkeys(
+            artists
+        )
+    )
+
+
+# ============================================================
+# COMBINED SB / ED
+# ============================================================
+
+def add_combined_sb_ed(
+    menu,
+    result
+):
+
+    if not isinstance(
+        menu,
+        dict
+    ):
+        return
+
+    credits = menu.get(
+        "credits",
+        []
+    )
+
+    if not isinstance(
+        credits,
+        list
+    ):
+        return
+
+    for credit in credits:
+
+        if not isinstance(
+            credit,
+            dict
+        ):
+            continue
+
+        roles = credit.get(
+            "roles",
+            []
+        )
+
+        if not isinstance(
+            roles,
+            list
+        ):
+            continue
+
+        for role in roles:
+
+            if not isinstance(
+                role,
+                dict
+            ):
+                continue
+
+            role_name = normalize(
+                role.get(
+                    "name",
+                    ""
+                )
+            )
+
+            if (
+                "storyboard"
+                in role_name
+                and
+                "episode director"
+                in role_name
+            ):
+
+                staff = role.get(
+                    "staff",
+                    []
+                )
+
+                if not isinstance(
+                    staff,
+                    list
+                ):
+                    continue
+
+                names = []
+
+                for person in staff:
+
+                    name = get_staff_name(
+                        person
+                    )
+
+                    if name:
+                        names.append(
+                            name
+                        )
+
+                result["SB"].extend(
+                    names
+                )
+
+                result["ED"].extend(
+                    names
+                )
+
+
+# ============================================================
+# CLEAN RESULT
+# ============================================================
+
+def clean_result(result):
+
+    for key in result:
+
+        if isinstance(
+            result[key],
+            list
+        ):
+
+            result[key] = list(
+                dict.fromkeys(
+                    result[key]
+                )
+            )
+
+    return result
+
+
+# ============================================================
+# EXTRACT NORMAL EPISODE
 # ============================================================
 
 def extract_episode_staff(
@@ -1156,23 +1227,19 @@ def extract_episode_staff(
     episode
 ):
 
-    menu = find_episode_menu(
+    menu = find_menu(
         data,
-        episode
+        str(episode)
     )
 
     if menu is None:
 
         print(
-            "No matching episode/OP/ED "
-            "data in this file."
+            "No matching episode data "
+            "in this file."
         )
 
         return None
-
-    # ========================================================
-    # NORMAL STAFF
-    # ========================================================
 
     result = {
 
@@ -1196,6 +1263,15 @@ def extract_episode_staff(
             "ass_ad"
         ),
 
+        "KA": find_roles(
+            menu,
+            "ka"
+        ),
+
+        "2KA": get_2ka_count(
+            menu
+        ),
+
         "CAD": find_roles(
             menu,
             "cad"
@@ -1204,6 +1280,97 @@ def extract_episode_staff(
         "CD": find_roles(
             menu,
             "cd"
+        ),
+    }
+
+    add_combined_sb_ed(
+        menu,
+        result
+    )
+
+    clean_result(
+        result
+    )
+
+    useful = any(
+        result[key]
+        for key in [
+            "SB",
+            "ED",
+            "AD",
+            "Ass. AD",
+            "KA",
+            "CAD",
+            "CD",
+        ]
+    )
+
+    if result["2KA"] > 0:
+        useful = True
+
+    if not useful:
+        return None
+
+    return result
+
+
+# ============================================================
+# EXTRACT OP / ED
+# ============================================================
+
+def extract_theme_staff(
+    data,
+    target
+):
+
+    target = normalize(
+        target
+    )
+
+    menu = find_menu(
+        data,
+        target
+    )
+
+    if menu is None:
+
+        print(
+            f"No matching menu found "
+            f"for {target}"
+        )
+
+        return None
+
+    # --------------------------------------------------------
+    # OP / ED get the SAME STAFF roles as normal episodes.
+    #
+    # PLUS:
+    #
+    # Artist
+    # CAD
+    # CD
+    # --------------------------------------------------------
+
+    result = {
+
+        "SB": find_roles(
+            menu,
+            "sb"
+        ),
+
+        "ED": find_roles(
+            menu,
+            "ed"
+        ),
+
+        "AD": find_roles(
+            menu,
+            "ad"
+        ),
+
+        "Ass. AD": find_roles(
+            menu,
+            "ass_ad"
         ),
 
         "KA": find_roles(
@@ -1214,146 +1381,30 @@ def extract_episode_staff(
         "2KA": get_2ka_count(
             menu
         ),
+
+        "CAD": find_roles(
+            menu,
+            "cad"
+        ),
+
+        "CD": find_roles(
+            menu,
+            "cd"
+        ),
+
+        "Artist": get_artist(
+            menu
+        ),
     }
 
-    # ========================================================
-    # STORYBOARD / EPISODE DIRECTOR COMBINED ROLE
-    # ========================================================
-
-    credits = menu.get(
-        "credits",
-        []
+    add_combined_sb_ed(
+        menu,
+        result
     )
 
-    if isinstance(
-        credits,
-        list
-    ):
-
-        for credit in credits:
-
-            if not isinstance(
-                credit,
-                dict
-            ):
-                continue
-
-            roles = credit.get(
-                "roles",
-                []
-            )
-
-            if not isinstance(
-                roles,
-                list
-            ):
-                continue
-
-            for role in roles:
-
-                if not isinstance(
-                    role,
-                    dict
-                ):
-                    continue
-
-                role_name = normalize(
-                    role.get(
-                        "name",
-                        ""
-                    )
-                )
-
-                if (
-                    "storyboard"
-                    in role_name
-                    and
-                    "episode director"
-                    in role_name
-                ):
-
-                    names = get_staff_from_role(
-                        role
-                    )
-
-                    result["SB"].extend(
-                        names
-                    )
-
-                    result["ED"].extend(
-                        names
-                    )
-
-    # ========================================================
-    # OP / ED ARTIST
-    # ========================================================
-
-    # Only show Artist for OP/ED.
-    #
-    # Example:
-    #
-    # Song -> King Gnu
-    #
-    # Result:
-    #
-    # Artist
-    # - King Gnu
-    #
-    # We deliberately DO NOT include:
-    # Lyrics
-    # Composition
-    # Arrangement
-    # Label
-    # Theme Song Cooperation
-    #
-
-    if isinstance(
-        episode,
-        str
-    ):
-
-        value = normalize(
-            episode
-        )
-
-        is_op_ed = re.fullmatch(
-            r"(op|opening|ed|ending)[\s\-]*\d+",
-            value
-        )
-
-        if is_op_ed:
-
-            result["Artist"] = find_roles(
-                menu,
-                "artist"
-            )
-
-    # ========================================================
-    # REMOVE DUPLICATES
-    # ========================================================
-
-    for key in [
-        "SB",
-        "ED",
-        "AD",
-        "Ass. AD",
-        "CAD",
-        "CD",
-        "KA",
-        "Artist",
-    ]:
-
-        if key in result:
-
-            result[key] = list(
-                dict.fromkeys(
-                    result[key]
-                )
-            )
-
-    # ========================================================
-    # CHECK IF USEFUL
-    # ========================================================
+    clean_result(
+        result
+    )
 
     useful = any(
         result[key]
@@ -1362,19 +1413,17 @@ def extract_episode_staff(
             "ED",
             "AD",
             "Ass. AD",
+            "KA",
             "CAD",
             "CD",
-            "KA",
             "Artist",
         ]
     )
 
     if result["2KA"] > 0:
-
         useful = True
 
     if not useful:
-
         return None
 
     return result
@@ -1440,12 +1489,9 @@ def find_matching_files(
             continue
 
         if filename == "anime_index.json":
-
             continue
 
-        base = filename[
-            :-5
-        ].lower()
+        base = filename[:-5].lower()
 
         if base == anime_slug:
 
@@ -1476,6 +1522,64 @@ def find_matching_files(
 
 
 # ============================================================
+# PARSE EPISODE INPUT
+# ============================================================
+
+def parse_episode_input(
+    episode
+):
+
+    if episode is None:
+        return None
+
+    value = str(
+        episode
+    ).strip().lower()
+
+    # --------------------------------------------------------
+    # OP / ED
+    #
+    # Accept:
+    #
+    # op1
+    # op 1
+    # OP1
+    # OP 1
+    # ed1
+    # ed 1
+    # --------------------------------------------------------
+
+    match = re.fullmatch(
+        r"(op|ed)\s*(\d+)",
+        value
+    )
+
+    if match:
+
+        kind = match.group(1)
+
+        number = int(
+            match.group(2)
+        )
+
+        return (
+            f"{kind}{number}"
+        )
+
+    # --------------------------------------------------------
+    # Normal episode
+    # --------------------------------------------------------
+
+    if value.isdigit():
+
+        return int(
+            value
+        )
+
+    return None
+
+
+# ============================================================
 # MAIN get_staff
 # ============================================================
 
@@ -1493,16 +1597,51 @@ def get_staff(
         anime_input
     )
 
+    parsed_episode = parse_episode_input(
+        episode
+    )
+
+    if parsed_episode is None:
+
+        print()
+        print(
+            "ERROR: Invalid episode."
+        )
+
+        print(
+            "Use:"
+        )
+
+        print(
+            "  1"
+        )
+
+        print(
+            "  12"
+        )
+
+        print(
+            "  op1"
+        )
+
+        print(
+            "  op2"
+        )
+
+        print(
+            "  ed1"
+        )
+
+        print(
+            "  ed2"
+        )
+
+        return None
+
     print()
-    print(
-        "=" * 60
-    )
-    print(
-        "STAFF LOOKUP"
-    )
-    print(
-        "=" * 60
-    )
+    print("=" * 60)
+    print("STAFF LOOKUP")
+    print("=" * 60)
 
     print(
         f"Input: {anime}"
@@ -1517,11 +1656,10 @@ def get_staff(
     )
 
     print(
-        f"Episode: {episode}"
+        f"Episode: {parsed_episode}"
     )
 
     print()
-
     print(
         "Searching local staff files..."
     )
@@ -1533,7 +1671,6 @@ def get_staff(
     if not matches:
 
         print()
-
         print(
             "No matching JSON files found."
         )
@@ -1541,7 +1678,6 @@ def get_staff(
         return None
 
     print()
-
     print(
         "Matching staff files:"
     )
@@ -1553,9 +1689,9 @@ def get_staff(
             f"score={score}"
         )
 
-    # ========================================================
-    # TRY MATCHING FILES
-    # ========================================================
+    # --------------------------------------------------------
+    # Try files
+    # --------------------------------------------------------
 
     for score, filename in matches:
 
@@ -1565,7 +1701,6 @@ def get_staff(
         )
 
         print()
-
         print(
             f"Trying: {filename}"
         )
@@ -1575,20 +1710,43 @@ def get_staff(
         )
 
         if data is None:
-
             continue
 
-        staff = extract_episode_staff(
-            data,
-            episode
-        )
+        # ----------------------------------------------------
+        # OP / ED
+        # ----------------------------------------------------
+
+        if (
+            isinstance(
+                parsed_episode,
+                str
+            )
+            and
+            parsed_episode.startswith(
+                ("op", "ed")
+            )
+        ):
+
+            staff = extract_theme_staff(
+                data,
+                parsed_episode
+            )
+
+        # ----------------------------------------------------
+        # Normal episode
+        # ----------------------------------------------------
+
+        else:
+
+            staff = extract_episode_staff(
+                data,
+                parsed_episode
+            )
 
         if staff is None:
-
             continue
 
         print()
-
         print(
             f"Selected: {filename}"
         )
@@ -1617,29 +1775,15 @@ def get_staff(
 
         return staff
 
-    # ========================================================
-    # ERROR
-    # ========================================================
-
     print()
+    print("=" * 60)
+    print("ERROR")
+    print("=" * 60)
 
     print(
-        "=" * 60
-    )
-
-    print(
-        "ERROR"
-    )
-
-    print(
-        "=" * 60
-    )
-
-    print(
-        f"No episode/OP/ED staff data "
-        f"was found for {anime} "
-        f"Season {season} "
-        f"Episode {episode}."
+        f"No staff data was found "
+        f"for {anime} "
+        f"{parsed_episode}."
     )
 
     return None
@@ -1652,7 +1796,6 @@ def get_staff(
 if __name__ == "__main__":
 
     print()
-
     print(
         "Staff Scraper Test"
     )
@@ -1665,46 +1808,36 @@ if __name__ == "__main__":
         "Anime: "
     ).strip()
 
+    season_input = input(
+        "Season: "
+    ).strip()
+
     try:
 
         season = int(
-            input(
-                "Season: "
-            ).strip()
+            season_input
         )
 
     except ValueError:
 
-        print(
-            "Invalid season. "
-            "Using Season 1."
-        )
-
         season = 1
 
-    # --------------------------------------------------------
     # IMPORTANT:
     #
-    # DO NOT convert episode directly to int.
+    # Keep this as STRING.
     #
-    # This allows:
+    # It accepts:
     #
     # 1
-    # 2
+    # 12
     # op1
     # op2
     # ed1
     # ed2
-    # --------------------------------------------------------
 
     episode = input(
-        "Episode / OP / ED "
-        "(e.g. 1, op1, op2, ed1): "
+        "Episode / OP / ED: "
     ).strip()
-
-    if not episode:
-
-        episode = "1"
 
     result = get_staff(
         anime,
@@ -1722,26 +1855,12 @@ if __name__ == "__main__":
 
     else:
 
-        print(
-            "=" * 40
-        )
-
-        print(
-            "STAFF"
-        )
-
-        print(
-            "=" * 40
-        )
-
         for role, names in result.items():
 
             if not names:
-
                 continue
 
             print()
-
             print(
                 role
             )

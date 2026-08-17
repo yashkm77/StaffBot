@@ -1,4 +1,5 @@
 import os
+import re
 
 import discord
 
@@ -59,17 +60,11 @@ EMBED_COLOR = discord.Color.from_rgb(
 # SEASON DETECTION
 # ============================================================
 
-def detect_season(
-    anime
-):
+def detect_season(anime):
 
     normalized = normalize(
         anime
     )
-
-    # --------------------------------------------------------
-    # Explicit alias
-    # --------------------------------------------------------
 
     if normalized in ANIME_ALIASES:
 
@@ -188,10 +183,6 @@ def detect_season(
     # Direct text fallback
     # --------------------------------------------------------
 
-    match = None
-
-    import re
-
     match = re.search(
         r"(?:season|s)\s*(\d+)",
         normalized
@@ -200,11 +191,13 @@ def detect_season(
     if match:
 
         try:
+
             return int(
                 match.group(1)
             )
 
         except ValueError:
+
             pass
 
     return 1
@@ -214,9 +207,7 @@ def detect_season(
 # FORMAT NAMES
 # ============================================================
 
-def format_names(
-    names
-):
+def format_names(names):
 
     if not names:
         return None
@@ -252,8 +243,6 @@ def split_text(
 
     current = ""
 
-    # Split at commas where possible
-
     pieces = [
         x.strip()
         for x in text.split(",")
@@ -268,9 +257,12 @@ def split_text(
 
             current = piece
 
-        elif len(
-            current
-        ) + len(piece) + 2 <= limit:
+        elif (
+            len(current)
+            + len(piece)
+            + 2
+            <= limit
+        ):
 
             current += (
                 ", "
@@ -319,11 +311,6 @@ def add_staff_fields(
         text,
         1024
     )
-
-    # --------------------------------------------------------
-    # First chunk gets the title.
-    # Additional chunks don't repeat the title.
-    # --------------------------------------------------------
 
     for index, chunk in enumerate(
         chunks
@@ -396,20 +383,74 @@ async def on_ready():
 )
 @app_commands.describe(
     anime="Anime name or shortcut",
-    episode="Episode number"
+    episode="Episode number, OP1/OP2, or ED1/ED2"
 )
 async def staff(
     interaction: discord.Interaction,
     anime: str,
-    episode: int
+    episode: str
 ):
 
     await interaction.response.defer()
 
-    if episode < 1:
+    # --------------------------------------------------------
+    # Validate episode here.
+    #
+    # IMPORTANT:
+    #
+    # episode MUST be str.
+    #
+    # Otherwise Discord itself rejects:
+    #
+    # op1
+    # op2
+    # ed1
+    # ed2
+    # --------------------------------------------------------
+
+    episode_value = episode.strip().lower()
+
+    valid_episode = False
+
+    # Normal number
+
+    if episode_value.isdigit():
+
+        if int(episode_value) >= 1:
+
+            valid_episode = True
+
+    # OP / ED
+
+    elif re.fullmatch(
+        r"(op|ed)\s*\d+",
+        episode_value
+    ):
+
+        number_match = re.search(
+            r"\d+",
+            episode_value
+        )
+
+        if number_match:
+
+            if int(
+                number_match.group()
+            ) >= 1:
+
+                valid_episode = True
+
+    if not valid_episode:
 
         await interaction.followup.send(
-            "❌ Episode must be 1 or higher."
+            "❌ Invalid episode.\n\n"
+            "Use:\n"
+            "`1`\n"
+            "`12`\n"
+            "`op1`\n"
+            "`op2`\n"
+            "`ed1`\n"
+            "`ed2`"
         )
 
         return
@@ -440,7 +481,7 @@ async def staff(
     )
 
     print(
-        f"Episode: {episode}"
+        f"Episode: {episode_value}"
     )
 
     print(
@@ -452,7 +493,7 @@ async def staff(
         data = get_staff(
             anime,
             season,
-            episode
+            episode_value
         )
 
     except Exception as e:
@@ -476,13 +517,13 @@ async def staff(
     if not data:
 
         embed = discord.Embed(
-            title="Episode Staff Credits",
+            title="Staff Credits",
             description=(
                 f"**{anime}** — "
                 f"Season {season} "
-                f"Episode {episode}\n\n"
+                f"Episode {episode_value}\n\n"
                 "**No relevant staff "
-                "credits found for this episode.**"
+                "credits found for this entry.**"
             ),
             color=EMBED_COLOR
         )
@@ -498,15 +539,47 @@ async def staff(
         return
 
     # ========================================================
+    # TITLE
+    # ========================================================
+
+    if (
+        isinstance(
+            episode_value,
+            str
+        )
+        and episode_value.startswith(
+            "op"
+        )
+    ):
+
+        title_text = "Opening Staff"
+
+    elif (
+        isinstance(
+            episode_value,
+            str
+        )
+        and episode_value.startswith(
+            "ed"
+        )
+    ):
+
+        title_text = "Ending Staff"
+
+    else:
+
+        title_text = "Episode Staff Credits"
+
+    # ========================================================
     # EMBED
     # ========================================================
 
     embed = discord.Embed(
-        title="Episode Staff Credits",
+        title=title_text,
         description=(
             f"**{anime}** — "
             f"Season {season} "
-            f"Episode {episode}"
+            f"Episode {episode_value}"
         ),
         color=EMBED_COLOR
     )
@@ -568,6 +641,34 @@ async def staff(
     )
 
     # ========================================================
+    # CHIEF ANIMATION DIRECTOR
+    # ========================================================
+
+    add_staff_fields(
+        embed,
+        "👑",
+        "Chief Animation Director",
+        data.get(
+            "CAD",
+            []
+        )
+    )
+
+    # ========================================================
+    # CHARACTER DESIGN
+    # ========================================================
+
+    add_staff_fields(
+        embed,
+        "🎨",
+        "Character Design",
+        data.get(
+            "CD",
+            []
+        )
+    )
+
+    # ========================================================
     # KEY ANIMATION
     # ========================================================
 
@@ -599,6 +700,20 @@ async def staff(
         )
 
     # ========================================================
+    # ARTIST
+    # ========================================================
+
+    add_staff_fields(
+        embed,
+        "🎵",
+        "Artist",
+        data.get(
+            "Artist",
+            []
+        )
+    )
+
+    # ========================================================
     # FOOTER
     # ========================================================
 
@@ -622,7 +737,6 @@ async def staff(
             f"EMBED ERROR: {e!r}"
         )
 
-        # Emergency fallback
         await interaction.followup.send(
             "❌ The staff list was too large "
             "to display in the embed."
