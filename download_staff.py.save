@@ -1,0 +1,290 @@
+import json
+import os
+import shutil
+
+
+# =========================================================
+# SETTINGS
+# =========================================================
+
+DATA_DIR = "staff_data"
+
+# Add anime slugs here.
+#
+# Example:
+#
+# "my-hero-academia"
+# "jujutsu-kaisen-2nd-season"
+# "one-punch-man"
+#
+# The corresponding JSON files should be placed inside
+# the staff_data/ folder.
+ANIME_SLUGS = [
+    "my-hero-academia",
+    "jujutsu-kaisen",
+    "jujutsu-kaisen-2nd-season",
+    "one-punch-man",
+    "bleach",
+    "naruto",
+]
+
+
+# =========================================================
+# CREATE DATA DIRECTORY
+# =========================================================
+
+def create_data_directory():
+
+    if not os.path.exists(DATA_DIR):
+
+        os.makedirs(DATA_DIR)
+
+        print(
+            f"Created directory: {DATA_DIR}/"
+        )
+
+
+# =========================================================
+# CHECK JSON
+# =========================================================
+
+def check_json(path):
+
+    if not os.path.exists(path):
+
+        return False, "File not found"
+
+    try:
+
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as file:
+
+            data = json.load(file)
+
+    except json.JSONDecodeError as e:
+
+        return False, f"Invalid JSON: {e}"
+
+    except OSError as e:
+
+        return False, f"Could not read file: {e}"
+
+    if not isinstance(data, dict):
+
+        return False, "JSON root is not an object"
+
+    menus = data.get("menus")
+
+    if not isinstance(menus, list):
+
+        return False, "No valid menus array"
+
+    return True, f"{len(menus)} menus"
+
+
+# =========================================================
+# IMPORT ONE ANIME
+# =========================================================
+
+def import_anime(slug):
+
+    filename = f"{slug}.json"
+
+    source = os.path.join(
+        DATA_DIR,
+        filename
+    )
+
+    destination = filename
+
+    # -----------------------------------------------------
+    # Check source
+    # -----------------------------------------------------
+
+    if not os.path.exists(source):
+
+        print(
+            f"❌ {slug}: {source} not found"
+        )
+
+        return False
+
+    # -----------------------------------------------------
+    # Validate source
+    # -----------------------------------------------------
+
+    valid, message = check_json(
+        source
+    )
+
+    if not valid:
+
+        print(
+            f"❌ {slug}: {message}"
+        )
+
+        return False
+
+    # -----------------------------------------------------
+    # Copy file
+    # -----------------------------------------------------
+
+    try:
+
+        shutil.copy2(
+            source,
+            destination
+        )
+
+    except OSError as e:
+
+        print(
+            f"❌ {slug}: copy failed: {e}"
+        )
+
+        return False
+
+    print(
+        f"✅ {slug}: imported ({message})"
+    )
+
+    return True
+
+
+# =========================================================
+# IMPORT ALL
+# =========================================================
+
+def import_all():
+
+    create_data_directory()
+
+    print()
+    print("=" * 60)
+    print("Staff JSON Importer")
+    print("=" * 60)
+    print()
+
+    success = 0
+    failed = 0
+
+    for slug in ANIME_SLUGS:
+
+        slug = str(
+            slug
+        ).strip()
+
+        if not slug:
+            continue
+
+        if import_anime(slug):
+
+            success += 1
+
+        else:
+
+            failed += 1
+
+    print()
+    print("=" * 60)
+    print("IMPORT COMPLETE")
+    print("=" * 60)
+    print()
+    print(
+        f"Imported: {success}"
+    )
+    print(
+        f"Failed:   {failed}"
+    )
+    print()
+
+
+# =========================================================
+# LIST AVAILABLE LOCAL JSON FILES
+# =========================================================
+
+def list_available():
+
+    create_data_directory()
+
+    files = []
+
+    for filename in os.listdir(DATA_DIR):
+
+        if not filename.endswith(".json"):
+            continue
+
+        path = os.path.join(
+            DATA_DIR,
+            filename
+        )
+
+        valid, message = check_json(
+            path
+        )
+
+        slug = filename[:-5]
+
+        if valid:
+
+            print(
+                f"✅ {slug} — {message}"
+            )
+
+            files.append(slug)
+
+        else:
+
+            print(
+                f"❌ {slug} — {message}"
+            )
+
+    return files
+
+
+# =========================================================
+# MAIN
+# =========================================================
+
+if __name__ == "__main__":
+
+    print()
+    print("Staff Data Manager")
+    print()
+    print("1. Import configured anime")
+    print("2. Check available JSON files")
+    print()
+
+    choice = input(
+        "Choose 1 or 2: "
+    ).strip()
+
+    print()
+
+    if choice == "1":
+
+        import_all()
+
+    elif choice == "2":
+
+        print("=" * 60)
+        print("AVAILABLE STAFF DATA")
+        print("=" * 60)
+        print()
+
+        available = list_available()
+
+        print()
+
+        print(
+            f"Total valid files: {len(available)}"
+        )
+
+    else:
+
+        print(
+            "Invalid choice."
+        )

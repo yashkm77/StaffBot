@@ -1,0 +1,33 @@
+{
+  "anime": "My Hero Academia",
+  "slug": "my-hero-academia",
+  "episode": "#01",
+  "storyboard": [
+    "Kenji Nagasaki"
+  ],
+  "episode_director": [
+    "Takurou Tsukada"
+  ],
+  "animation_director": [
+    "Yoshihiko Umakoshi"
+  ],
+  "key_animation": [
+    "Hideki Yamasaki",
+    "Kenji Mizuhata",
+    "Kazuhiro Miwa",
+    "Eiichi Akiyama",
+    "Shiori Kudou",
+    "Yuuta Kiso",
+    "Yuuichi Fujimaki",
+    "Naoto Abe",
+    "Nobutaka Masuda",
+    "Takuya Saitou",
+    "Yuka Shibata",
+    "Tetsuya Matsukawa",
+    "Tatsuya Miki",
+    "Tomoko Fukunaga",
+    "Nozomi Sakamoto",
+    "Hiroshi Konno"
+  ],
+  "second_key_animation_count": 22
+}

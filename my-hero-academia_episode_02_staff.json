@@ -1,0 +1,809 @@
+{
+  "name": "#02",
+  "credits": [
+    {
+      "name": "Main Staff",
+      "roles": [
+        {
+          "name": "Script",
+          "staff": [
+            {
+              "ja": "黒田洋介",
+              "en": "Yousuke Kuroda",
+              "id": 97471
+            }
+          ],
+          "original": "脚本"
+        },
+        {
+          "name": "Storyboard",
+          "staff": [
+            {
+              "ja": "松尾衡",
+              "en": "Kou Matsuo",
+              "id": 100326
+            }
+          ],
+          "original": "絵コンテ"
+        },
+        {
+          "name": "Episode Director",
+          "staff": [
+            {
+              "ja": "大久保朋",
+              "en": "Tomo Ookubo",
+              "id": 149488
+            }
+          ],
+          "original": "演出"
+        },
+        {
+          "name": "Animation Director",
+          "staff": [
+            {
+              "ja": "小平佳幸",
+              "en": "Yoshiyuki Kodaira",
+              "id": 144012
+            },
+            {
+              "ja": "村井孝司",
+              "en": "Takashi Murai",
+              "id": 131944
+            }
+          ],
+          "original": "作画監督"
+        }
+      ]
+    },
+    {
+      "name": "Key Animation",
+      "roles": [
+        {
+          "name": "Key Animation",
+          "staff": [
+            {
+              "ja": "古賀美裕紀",
+              "en": "Miyuki Koga",
+              "id": 128872
+            },
+            {
+              "ja": "関﨑昌也",
+              "en": "Masaya Sekizaki",
+              "id": 133302,
+              "pn": {
+                "ja": "関崎昌也",
+                "en": "Masaya Sekizaki"
+              }
+            },
+            {
+              "ja": "武佐友紀子",
+              "en": "Yukiko Busa",
+              "id": 133294
+            },
+            {
+              "ja": "青柳富士子",
+              "en": "Fujiko Aoyagi",
+              "id": 133015
+            },
+            {
+              "ja": "次橋有紀",
+              "en": "Yuki Tsugihashi",
+              "id": 143122
+            },
+            {
+              "ja": "斎藤香",
+              "en": "Kaori Saitou",
+              "id": 132903
+            },
+            {
+              "ja": "談議祐子",
+              "en": "Yuuko Dangi",
+              "id": 133297
+            },
+            {
+              "ja": "松川哲也",
+              "en": "Tetsuya Matsukawa",
+              "id": 149110
+            },
+            {
+              "ja": "加藤滉介",
+              "en": "Kousuke Katou",
+              "id": 133151
+            },
+            {
+              "ja": "近有希",
+              "en": "Yuki Kon",
+              "id": 164510
+            },
+            {
+              "ja": "門上洋子",
+              "en": "Youko Kadokami",
+              "id": 132685
+            },
+            {
+              "ja": "福永智子",
+              "en": "Tomoko Fukunaga",
+              "id": 122609
+            },
+            {
+              "ja": "川合彩香",
+              "en": "Ayaka Kawai",
+              "id": 133291
+            },
+            {
+              "ja": "柴田有香",
+              "en": "Yuka Shibata",
+              "id": 285956
+            },
+            {
+              "ja": "稲留和美",
+              "en": "Kazumi Inadome",
+              "id": 152635
+            },
+            {
+              "ja": "川上暢彦",
+              "en": "Nobuhiko Kawakami",
+              "id": 133296
+            },
+            {
+              "ja": "高野恵子",
+              "en": "Keiko Takano",
+              "id": 132906
+            },
+            {
+              "ja": "北原章雄",
+              "en": "Akio Kitahara",
+              "id": 141976
+            },
+            {
+              "ja": "摺木沙織",
+              "en": "Saori Suriki",
+              "id": 133298
+            },
+            {
+              "ja": "石井智美",
+              "en": "Tomomi Ishii",
+              "id": 139181
+            },
+            {
+              "ja": "樋口香里",
+              "en": "Kaori Higuchi",
+              "id": 130452
+            },
+            {
+              "ja": "木﨑由香梨",
+              "en": "Yukari Kizaki",
+              "id": 148381
+            },
+            {
+              "ja": "杉浦幸次",
+              "en": "Kouji Sugiura",
+              "id": 129851
+            },
+            {
+              "ja": "増田伸孝",
+              "en": "Nobutaka Masuda",
+              "id": 132752
+            },
+            {
+              "ja": "中村豊",
+              "en": "Yutaka Nakamura",
+              "id": 101801
+            },
+            {
+              "ja": "和田高明",
+              "en": "Takaaki Wada",
+              "id": 153550
+            }
+          ],
+          "original": "原画"
+        }
+      ]
+    },
+    {
+      "name": "2nd Key Animation",
+      "roles": [
+        {
+          "name": "2nd Key Animation",
+          "staff": [
+            {
+              "ja": "橋本治奈",
+              "en": "Haruna Hashimoto",
+              "id": 133163
+            },
+            {
+              "ja": "保科有沙",
+              "en": "Arisa Hoshina",
+              "id": 133369
+            },
+            {
+              "ja": "",
+              "en": ""
+            },
+            {
+              "ja": "池田健太",
+              "en": "Kenta Ikeda",
+              "id": 297455
+            },
+            {
+              "ja": "板井俊祐",
+              "en": "Shunsuke Itai",
+              "id": 147995
+            },
+            {
+              "ja": "岩田まめ",
+              "en": "Mame Iwata",
+              "id": 207003
+            },
+            {
+              "ja": "絵乃心",
+              "en": "Shin Eno"
+            },
+            {
+              "ja": "大川貴大",
+              "en": "Takahiro Ookawa",
+              "id": 183834
+            },
+            {
+              "ja": "倉田きみ",
+              "en": "Kimi Kurata",
+              "id": 206641
+            },
+            {
+              "ja": "佐倉みなみ",
+              "en": "Minami Sakura",
+              "id": 136921
+            },
+            {
+              "ja": "佐々木文恵",
+              "en": "Fumie Sasaki",
+              "id": 158871
+            },
+            {
+              "ja": "志賀愛",
+              "en": "Ai Shiga",
+              "id": 186441
+            },
+            {
+              "ja": "白髪浩美",
+              "en": "Hiromi Shiraga",
+              "id": 133306
+            },
+            {
+              "ja": "武佐友紀子",
+              "en": "Yukiko Busa",
+              "id": 133294
+            },
+            {
+              "ja": "中野あずさ",
+              "en": "Azusa Nakano",
+              "id": 169447
+            },
+            {
+              "ja": "吉原拓也",
+              "en": "Takuya Yoshihara",
+              "id": 132690
+            },
+            {
+              "ja": "",
+              "en": ""
+            },
+            {
+              "ja": "",
+              "en": "Wish",
+              "isStudio": true,
+              "id": "9"
+            },
+            {
+              "ja": "ウォンバット",
+              "en": "Wombat",
+              "isStudio": true,
+              "id": "412"
+            },
+            {
+              "ja": "",
+              "en": "C-station",
+              "isStudio": true,
+              "id": "6074"
+            },
+            {
+              "ja": "スタジオマーク",
+              "en": "Studio Mark",
+              "isStudio": true,
+              "id": 90
+            }
+          ],
+          "original": "第二原画"
+        }
+      ]
+    },
+    {
+      "name": "In-Between Animation",
+      "roles": [
+        {
+          "name": "In-Between Check",
+          "staff": [
+            {
+              "ja": "岩長幸一",
+              "en": "Kouichi Iwanaga",
+              "id": 187065
+            }
+          ],
+          "original": "動画検査"
+        },
+        {
+          "name": "In-Between Animation",
+          "staff": [
+            {
+              "ja": "ボンズ作画部",
+              "en": "bones Animation Department",
+              "isStudio": true,
+              "id": 609
+            },
+            {
+              "ja": "越口真穂",
+              "en": "Maho Koshiguchi",
+              "id": 200136
+            },
+            {
+              "ja": "徳島安結",
+              "en": "Yasuyuki Tokushima",
+              "id": "200134"
+            },
+            {
+              "ja": "新垣芙未可",
+              "en": "Fumika Arakaki",
+              "id": 186572
+            },
+            {
+              "ja": "伊藤朱莉",
+              "en": "Shuri Itou",
+              "id": 200117
+            },
+            {
+              "ja": "田村愛美",
+              "en": "Manami Tamura",
+              "id": 200137
+            },
+            {
+              "ja": "堀本真美",
+              "en": "Mami Horimoto",
+              "id": 186575
+            },
+            {
+              "ja": "宍戸俊介",
+              "en": "Shunsuke Shishido",
+              "id": 183856
+            },
+            {
+              "ja": "",
+              "en": ""
+            },
+            {
+              "ja": "阿武恵子",
+              "en": "Keiko Abu",
+              "id": 146111
+            },
+            {
+              "ja": "鈴木富美子",
+              "en": "Fumiko Suzuki",
+              "id": 146119
+            },
+            {
+              "ja": "",
+              "en": ""
+            },
+            {
+              "ja": "アートランド",
+              "en": "Artland",
+              "isStudio": true,
+              "id": "8"
+            },
+            {
+              "ja": "アクタス",
+              "en": "ACTAS",
+              "isStudio": true,
+              "id": "60"
+            },
+            {
+              "ja": "アニタス神戸",
+              "en": "Anitus-Kobe",
+              "isStudio": true,
+              "id": 67
+            },
+            {
+              "ja": "アニメーションスタジオ・セブン",
+              "en": "Animation Studio Seven",
+              "isStudio": true,
+              "id": "541"
+            },
+            {
+              "ja": "",
+              "en": "P.A.WORKS",
+              "isStudio": true,
+              "id": "132",
+              "pn": {
+                "ja": "ピーエーワークス",
+                "en": "P.A.WORKS"
+              }
+            },
+            {
+              "ja": "プロジェクト4",
+              "en": "Project 4",
+              "isStudio": true
+            },
+            {
+              "ja": "スタジオエル",
+              "en": "Studio Elle",
+              "isStudio": true,
+              "id": "6498"
+            },
+            {
+              "ja": "",
+              "en": "R.I.C",
+              "isStudio": true,
+              "id": "190"
+            },
+            {
+              "ja": "エイトビット",
+              "en": "8bit",
+              "isStudio": true,
+              "id": "4418"
+            },
+            {
+              "ja": "",
+              "en": ""
+            },
+            {
+              "ja": "FAIインターナショナル",
+              "en": "FAI International",
+              "isStudio": true,
+              "id": 100
+            },
+            {
+              "ja": "神龍",
+              "en": "xenron",
+              "isStudio": true,
+              "id": "6187"
+            }
+          ],
+          "original": "動画"
+        }
+      ]
+    },
+    {
+      "name": "Finish Animation",
+      "roles": [
+        {
+          "name": "Color Coordination / Check",
+          "staff": [
+            {
+              "ja": "高橋友子",
+              "en": "Tomoko Takahashi",
+              "id": 148386
+            }
+          ],
+          "original": "色指定・検査"
+        },
+        {
+          "name": "Finish Animation",
+          "staff": [
+            {
+              "ja": "",
+              "en": "Wish",
+              "isStudio": true,
+              "id": "9"
+            },
+            {
+              "ja": "斎藤知津江",
+              "en": "Chizue Saitou",
+              "id": "158121"
+            },
+            {
+              "ja": "井上泉",
+              "en": "Izumi Inoue",
+              "id": 158135
+            },
+            {
+              "ja": "砂原直子",
+              "en": "Naoko Sunahara",
+              "id": 188312
+            },
+            {
+              "ja": "天本洋介",
+              "en": "Yousuke Amamoto",
+              "id": 187989
+            },
+            {
+              "ja": "古賀真利江",
+              "en": "Marie Koga",
+              "id": 188317
+            },
+            {
+              "ja": "北沢理絵",
+              "en": "Rie Kitazawa",
+              "id": 170277
+            },
+            {
+              "ja": "妻鹿真琴",
+              "en": "Makoto Mega",
+              "id": 188574
+            },
+            {
+              "ja": "内田潤",
+              "en": "Megumi Uchida",
+              "id": 194580
+            },
+            {
+              "ja": "山﨑久美子",
+              "en": "Kumiko Yamazaki",
+              "id": "170278"
+            },
+            {
+              "ja": "中川友紀子",
+              "en": "Yukiko Nakagawa",
+              "id": 195170
+            },
+            {
+              "ja": "福島晃貴",
+              "en": "Akitaka Fukushima",
+              "id": 197053
+            },
+            {
+              "ja": "斎藤翠",
+              "en": "Midori Saitou",
+              "id": 197054
+            }
+          ],
+          "original": "仕上げ"
+        },
+        {
+          "name": "Finish Animation Management",
+          "staff": [
+            {
+              "ja": "石川直樹",
+              "en": "Naoki Ishikawa",
+              "id": 156091
+            }
+          ],
+          "original": "仕上げ管理"
+        },
+        {
+          "name": "Special Effects",
+          "staff": [
+            {
+              "ja": "イノイエシン",
+              "en": "Shin Inoie",
+              "id": 148673
+            }
+          ],
+          "original": "特殊効果"
+        }
+      ]
+    },
+    {
+      "name": "Background Art",
+      "roles": [
+        {
+          "name": "Art Board",
+          "staff": [
+            {
+              "ja": "丸山由紀子",
+              "en": "Yukiko Maruyama",
+              "id": 120001
+            },
+            {
+              "ja": "髙山八大",
+              "en": "Hachidai Takayama",
+              "id": 104344,
+              "pn": {
+                "ja": "高山八大",
+                "en": "Hachidai Takayama"
+              }
+            }
+          ],
+          "original": "美術ボード"
+        },
+        {
+          "name": "Art Design",
+          "staff": [
+            {
+              "ja": "池田繁美",
+              "en": "Shigemi Ikeda",
+              "id": 110647
+            },
+            {
+              "ja": "大久保修一",
+              "en": "Shuuichi Ookubo",
+              "id": 136063
+            },
+            {
+              "ja": "友野加世子",
+              "en": "Kayoko Tomono",
+              "id": 136064
+            }
+          ],
+          "original": "美術設定"
+        },
+        {
+          "name": "Background Art Chief",
+          "staff": [
+            {
+              "ja": "峯田佳実",
+              "en": "Yoshimi Mineda",
+              "id": 120344
+            }
+          ],
+          "original": "背景チーフ"
+        },
+        {
+          "name": "Background Art",
+          "staff": [
+            {
+              "ja": "アトリエ・ムサ",
+              "en": "ATELIER MUSA",
+              "isStudio": true,
+              "id": 237
+            },
+            {
+              "ja": "太田雅美",
+              "en": "Masami Oota",
+              "id": 148397
+            },
+            {
+              "ja": "濱子麻衣",
+              "en": "Mai Hamako",
+              "id": 148394
+            },
+            {
+              "ja": "竹越輝子",
+              "en": "Teruko Takekoshi",
+              "id": 148396
+            },
+            {
+              "ja": "組嶽江里",
+              "en": "Eri Kumidake",
+              "id": 189202
+            },
+            {
+              "ja": "柳田啓伍",
+              "en": "Keigo Yanagida",
+              "id": 189520
+            },
+            {
+              "ja": "髙薄亜実",
+              "en": "Ami Takasusuki",
+              "id": "148395"
+            },
+            {
+              "ja": "小林早織",
+              "en": "Saori Kobayashi",
+              "id": 207011
+            },
+            {
+              "ja": "徳永雄大",
+              "en": "Yuudai Tokunaga",
+              "id": 207004
+            },
+            {
+              "ja": "高薄洸二郎",
+              "en": "Koujirou Takasusuki",
+              "id": 207012
+            }
+          ],
+          "original": "背景"
+        }
+      ]
+    },
+    {
+      "name": "Photography",
+      "roles": [
+        {
+          "name": "Photography",
+          "staff": [
+            {
+              "ja": "ボンズ撮影部",
+              "en": "bones Photography Department",
+              "isStudio": true,
+              "id": 611
+            },
+            {
+              "ja": "佐々木康太",
+              "en": "Kouta Sasaki",
+              "id": 148402
+            },
+            {
+              "ja": "龍角里美",
+              "en": "Satomi Ryuukaku",
+              "id": 148398
+            },
+            {
+              "ja": "日野有里子",
+              "en": "Yuriko Hino",
+              "id": 148400
+            },
+            {
+              "ja": "澤貴史",
+              "en": "Takafumi Sawa",
+              "id": 145862
+            },
+            {
+              "ja": "猿渡真太郎",
+              "en": "Shintarou Saruwatari",
+              "id": 148399
+            },
+            {
+              "ja": "張盈穎",
+              "en": "Yingying Zhang",
+              "id": "183872"
+            },
+            {
+              "ja": "髙木風馬",
+              "en": "Fuuma Takagi",
+              "id": "183871"
+            },
+            {
+              "ja": "古本真由子",
+              "en": "Mayuko Furumoto",
+              "id": 132973
+            }
+          ],
+          "original": "撮影"
+        }
+      ]
+    },
+    {
+      "name": "3DCG",
+      "roles": [
+        {
+          "name": "3DCG",
+          "staff": [
+            {
+              "ja": "安東容太",
+              "en": "Youta Andou",
+              "id": 148234
+            },
+            {
+              "ja": "細川大輔",
+              "en": "Daisuke Hosokawa",
+              "id": 200168
+            },
+            {
+              "ja": "三宅拓馬",
+              "en": "Takuma Miyake",
+              "id": 146161
+            },
+            {
+              "ja": "南炳ジュン",
+              "en": "Byeong-Jun Nam",
+              "id": "288249",
+              "pn": {
+                "ja": "남병준",
+                "en": "Byeong-Jun Nam"
+              }
+            }
+          ],
+          "original": "3DCG"
+        }
+      ]
+    },
+    {
+      "name": "Production",
+      "roles": [
+        {
+          "name": "Production Assistant",
+          "staff": [
+            {
+              "ja": "丸山裕司",
+              "en": "Yuuji Maruyama",
+              "id": 386415
+            }
+          ],
+          "original": "制作進行"
+        }
+      ]
+    }
+  ],
+  "note": "**Episode 15 / Season 2 Episode 2**: うなれ体育祭 / Roaring Sports Festival",
+  "airedDate": "2017-04-08"
+}
