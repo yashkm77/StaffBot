@@ -77,7 +77,17 @@ ANIME_ALIASES = {
     "black clover sword of the wizard king":
         "black-clover-sword-of-the-wizard-king",
 
-        
+
+    #--------------------------------------------------------
+    # To Be Hero S
+    # --------------------------------------------------------
+
+     "to be hero x": "to_be_hero_x",
+     "tbhx": "to_be_hero_x",
+     "tbh x": "to_be_hero_x",
+     "hero x": "to_be_hero_x",   
+
+     
     # --------------------------------------------------------
     # My Hero Academia
     # --------------------------------------------------------
