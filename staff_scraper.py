@@ -73,6 +73,22 @@ ANIME_ALIASES = {
     "mha final": "my-hero-academia-final-season",
     "mha final season": "my-hero-academia-final-season",
 
+    # MHA Movies
+    "mha two heroes": "my-hero-academia-two-heroes",
+    "mha heroes rising": "my-hero-academia-heroes-rising",
+    "mha world heroes mission": "my-hero-academia-world-heroes-mission",
+    "mha you're next": "my-hero-academia-you-re-next",
+    "mha you are next": "my-hero-academia-you-re-next",
+
+    "my hero academia you're next":
+        "my-hero-academia-you-re-next",
+
+    "my hero academia you are next":
+        "my-hero-academia-you-re-next",
+
+    "mha movie 4":
+        "my-hero-academia-you-re-next",
+
 
     # --------------------------------------------------------
     # One Piece
@@ -83,6 +99,9 @@ ANIME_ALIASES = {
 
     "one piece fan letter": "one-piece-fan-letter",
     "op fan letter": "one-piece-fan-letter",
+
+    "one piece fanletter": "one-piece-fan-letter",
+    "op fanletter": "one-piece-fan-letter",
 
 
     # --------------------------------------------------------
@@ -179,6 +198,16 @@ ANIME_ALIASES = {
 
     "jojo bizarre adventure":
         "jojo-s-bizarre-adventure",
+
+    # JoJo OVA
+    "jojo ova":
+        "jojo-s-bizarre-adventure-ova",
+
+    "jojo 1993 ova":
+        "jojo-s-bizarre-adventure-ova",
+
+    "jojo ova 1993":
+        "jojo-s-bizarre-adventure-ova",
 
 
     # --------------------------------------------------------
@@ -442,7 +471,6 @@ ANIME_ALIASES = {
         "ousama-ranking-yuuki-no-takarabako",
 }
 
-
 # ============================================================
 # NORMALIZATION
 # ============================================================
@@ -631,12 +659,64 @@ def role_matches(role_name, wanted):
 
     role = normalize(role_name)
 
+    # --------------------------------------------------------
+    # Direct match
+    # --------------------------------------------------------
+
     if role == wanted:
         return True
 
+    # --------------------------------------------------------
+    # Exact aliases
+    # --------------------------------------------------------
+
     for alias in ROLE_ALIASES.get(wanted, []):
 
-        if role == normalize(alias):
+        alias_normalized = normalize(alias)
+
+        if role == alias_normalized:
+            return True
+
+    # --------------------------------------------------------
+    # Flexible Storyboard matching
+    # --------------------------------------------------------
+
+    if wanted == "sb":
+
+        if "storyboard" in role:
+            return True
+
+        if "storyboards" in role:
+            return True
+
+    # --------------------------------------------------------
+    # Flexible Episode Director matching
+    # --------------------------------------------------------
+
+    if wanted == "ed":
+
+        if "episode director" in role:
+            return True
+
+        if "episode direction" in role:
+            return True
+
+        if "unit director" in role:
+            return True
+
+    # --------------------------------------------------------
+    # Flexible 2nd Key Animation matching
+    # --------------------------------------------------------
+
+    if wanted == "2ka":
+
+        if "2nd key animation" in role:
+            return True
+
+        if "second key animation" in role:
+            return True
+
+        if "2nd key animator" in role:
             return True
 
     return False
@@ -1043,27 +1123,41 @@ def add_combined_sb_ed(menu, result):
             if not names:
                 continue
 
-            # ------------------------------------------------
-            # Storyboard / Unit Director
+                        # ------------------------------------------------
+            # Storyboard / Episode Director
             #
-            # KFSL example:
-            #
-            # Storyboard / Unit Director
-            # Shingo Yamashita
-            #
-            # This is treated as BOTH:
-            #
-            # SB = Shingo Yamashita
-            # ED = Shingo Yamashita
+            # KFSL can use several different role names.
+            # Handle all common variations.
             # ------------------------------------------------
 
+            role_lower = role_name.lower()
+
+            # Storyboard + Unit Director
             if (
-                "storyboard" in role_name
-                and
-                "unit director" in role_name
+                "storyboard" in role_lower
+                and "unit director" in role_lower
             ):
-
                 result["SB"].extend(names)
+                result["ED"].extend(names)
+                continue
+
+            # Storyboard
+            if (
+                "storyboard" in role_lower
+                or role_matches(role_name, "sb")
+            ):
+                result["SB"].extend(names)
+
+            # Episode Director / Episode Direction
+            if (
+                "episode director" in role_lower
+                or "episode direction" in role_lower
+                or role_matches(role_name, "ed")
+            ):
+                result["ED"].extend(names)
+
+            # Unit Director
+            if "unit director" in role_lower:
                 result["ED"].extend(names)
 
                 continue
