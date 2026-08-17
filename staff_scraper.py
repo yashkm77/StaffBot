@@ -54,7 +54,30 @@ ANIME_ALIASES = {
     "chainsaw man reze": "chainsaw-man-the-movie-reze-arc",
     "chainsaw man reze arc": "chainsaw-man-the-movie-reze-arc",
 
+    
+    # --------------------------------------------------------
+    # Black Clover
+    # --------------------------------------------------------
 
+    "black clover":
+        "black-clover",
+
+    "bc":
+        "black-clover",
+
+    "black clover sword of the wizard king":
+        "black-clover-sword-of-the-wizard-king",
+
+    "bc movie":
+        "black-clover-sword-of-the-wizard-king",
+
+    "black clover movie":
+        "black-clover-sword-of-the-wizard-king",
+
+    "black clover sword of the wizard king":
+        "black-clover-sword-of-the-wizard-king",
+
+        
     # --------------------------------------------------------
     # My Hero Academia
     # --------------------------------------------------------
