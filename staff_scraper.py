@@ -20,8 +20,8 @@ ANIME_ALIASES = {
     # Jujutsu Kaisen
     # --------------------------------------------------------
 
-    "jjk": "jujutsu-kaisen-2nd-season",
-    "jujutsu kaisen": "jujutsu-kaisen-2nd-season",
+    "jjk": "jujutsu-kaisen",
+    "jujutsu kaisen": "jujutsu-kaisen",
 
     "jjk s1": "jujutsu-kaisen-0",
     "jjk 0": "jujutsu-kaisen-0",
@@ -77,6 +77,9 @@ ANIME_ALIASES = {
 
     "one piece": "one-piece",
     "op": "one-piece",
+
+    "one piece fan letter": "one-piece-fan-letter",
+    "op fan letter": "one-piece-fan-letter",
 
 
     # --------------------------------------------------------
@@ -169,6 +172,9 @@ ANIME_ALIASES = {
 
     "jojo part 7":
         "jojo-s-bizarre-adventure-part-7-steel-ball-run-1st-stage",
+
+    "jojo bizarre adventure":
+        "jojo-s-bizarre-adventure",
 
 
     # --------------------------------------------------------
@@ -263,13 +269,122 @@ ANIME_ALIASES = {
 
 
     # --------------------------------------------------------
+    # Precure
+    # --------------------------------------------------------
+
+    "futari wa precure": "futari-wa-precure",
+    "precure": "futari-wa-precure",
+
+    "futari wa precure max heart":
+        "futari-wa-precure-max-heart",
+
+    "precure max heart":
+        "futari-wa-precure-max-heart",
+
+    "max heart":
+        "futari-wa-precure-max-heart",
+
+    "futari wa precure splash star":
+        "futari-wa-precure-splash-star",
+
+    "precure splash star":
+        "futari-wa-precure-splash-star",
+
+    "splash star":
+        "futari-wa-precure-splash-star",
+
+    "fresh precure":
+        "fresh-precure!",
+
+    "fresh":
+        "fresh-precure!",
+
+    "heartcatch precure":
+        "heartcatch-precure!",
+
+    "heartcatch":
+        "heartcatch-precure!",
+
+    "happiness charge precure":
+        "happiness-charge-precure!",
+
+    "happiness charge":
+        "happiness-charge-precure!",
+
+    "go princess precure":
+        "go!-princess-precure",
+
+    "go princess":
+        "go!-princess-precure",
+
+    "mahoutsukai precure":
+        "mahoutsukai-precure!",
+
+    "mahoutsukai":
+        "mahoutsukai-precure!",
+
+    "doki doki precure":
+        "doki-doki!-precure!",
+
+    "doki doki":
+        "doki-doki!-precure!",
+
+
+    # --------------------------------------------------------
+    # Precure Movies
+    # --------------------------------------------------------
+
+    "precure max heart movie":
+        "eiga-futari-wa-precure-max-heart",
+
+    "max heart movie":
+        "eiga-futari-wa-precure-max-heart",
+
+    "precure max heart 2":
+        "eiga-futari-wa-precure-max-heart-2-yukizora-no-tomodachi",
+
+    "max heart 2":
+        "eiga-futari-wa-precure-max-heart-2-yukizora-no-tomodachi",
+
+    "precure max heart 2 movie":
+        "eiga-futari-wa-precure-max-heart-2-yukizora-no-tomodachi",
+
+
+    # --------------------------------------------------------
+    # Little Witch Academia
+    # --------------------------------------------------------
+
+    "little witch academia":
+        "little-witch-academia",
+
+    "lwa":
+        "little-witch-academia",
+
+    "little witch academia tv":
+        "little-witch-academia-tv",
+
+    "lwa tv":
+        "little-witch-academia-tv",
+
+    "little witch academia enchanted parade":
+        "little-witch-academia-the-enchanted-parade",
+
+    "lwa enchanted parade":
+        "little-witch-academia-the-enchanted-parade",
+
+
+    # --------------------------------------------------------
     # Other
     # --------------------------------------------------------
 
-    "witch hat atelier": "witch-hat-atelier",
+    "witch hat atelier":
+        "witch-hat-atelier",
 
-    "ousama ranking": "ousama-ranking",
-    "ranking of kings": "ousama-ranking",
+    "ousama ranking":
+        "ousama-ranking",
+
+    "ranking of kings":
+        "ousama-ranking",
 
     "ousama ranking treasure box":
         "ousama-ranking-yuuki-no-takarabako",
@@ -281,6 +396,7 @@ ANIME_ALIASES = {
 # ============================================================
 
 def normalize(text):
+
     if not text:
         return ""
 
@@ -300,6 +416,7 @@ def normalize(text):
 # ============================================================
 
 def resolve_alias(anime):
+
     anime_normalized = normalize(anime)
 
     if anime_normalized in ANIME_ALIASES:
@@ -347,17 +464,7 @@ def get_staff_name(person):
     if not isinstance(person, dict):
         return None
 
-    # --------------------------------------------------------
-    # IMPORTANT
-    #
-    # If:
-    #
-    # en = Kohaku
-    # pn.en = Yutaka Nakamura
-    #
-    # use Yutaka Nakamura.
-    # --------------------------------------------------------
-
+    # Prefer public/stage name when available.
     pn = person.get("pn")
 
     if isinstance(pn, dict):
@@ -365,44 +472,27 @@ def get_staff_name(person):
         pn_en = pn.get("en")
 
         if pn_en and str(pn_en).strip():
-
-            return str(
-                pn_en
-            ).strip()
+            return str(pn_en).strip()
 
         pn_ja = pn.get("ja")
 
         if pn_ja and str(pn_ja).strip():
-
-            return str(
-                pn_ja
-            ).strip()
-
-    # Normal name
+            return str(pn_ja).strip()
 
     en = person.get("en")
 
     if en and str(en).strip():
-
-        return str(
-            en
-        ).strip()
+        return str(en).strip()
 
     ja = person.get("ja")
 
     if ja and str(ja).strip():
-
-        return str(
-            ja
-        ).strip()
+        return str(ja).strip()
 
     name = person.get("name")
 
     if name and str(name).strip():
-
-        return str(
-            name
-        ).strip()
+        return str(name).strip()
 
     return None
 
@@ -450,6 +540,23 @@ ROLE_ALIASES = {
         "second key animation",
         "second key animator",
         "第二原画",
+    ],
+
+    "cad": [
+        "chief animation director",
+        "chief animation directors",
+        "総作画監督",
+    ],
+
+    "cd": [
+        "character design",
+        "character designs",
+        "キャラクターデザイン",
+    ],
+
+    "song": [
+        "song",
+        "歌",
     ],
 }
 
@@ -551,15 +658,6 @@ def find_episode_menu(data, episode):
 
     # --------------------------------------------------------
     # MOVIE FALLBACK
-    #
-    # Reze Arc has:
-    #
-    # menus -> Movie
-    #
-    # There is no #01.
-    #
-    # For /staff csm reze 1
-    # use Movie.
     # --------------------------------------------------------
 
     if episode == 1:
@@ -580,8 +678,86 @@ def find_episode_menu(data, episode):
             )
 
             if name == "movie":
-
                 return menu
+
+    return None
+
+
+# ============================================================
+# FIND OP / ED MENU
+# ============================================================
+
+def find_theme_menu(data, theme):
+
+    if not isinstance(data, dict):
+        return None
+
+    menus = data.get(
+        "menus",
+        []
+    )
+
+    if not isinstance(
+        menus,
+        list
+    ):
+        return None
+
+    wanted = normalize(theme)
+
+    # Accept:
+    #
+    # OP
+    # ED
+    # Opening
+    # Ending
+    #
+
+    possible = {
+        wanted,
+    }
+
+    if wanted in {
+        "op",
+        "opening",
+        "opening theme",
+    }:
+
+        possible.update({
+            "op",
+            "opening",
+            "opening theme",
+        })
+
+    elif wanted in {
+        "ed",
+        "ending",
+        "ending theme",
+    }:
+
+        possible.update({
+            "ed",
+            "ending",
+            "ending theme",
+        })
+
+    for menu in menus:
+
+        if not isinstance(
+            menu,
+            dict
+        ):
+            continue
+
+        name = normalize(
+            menu.get(
+                "name",
+                ""
+            )
+        )
+
+        if name in possible:
+            return menu
 
     return None
 
@@ -651,7 +827,7 @@ def find_roles(menu, wanted):
             )
 
             # ------------------------------------------------
-            # Some datasets may already store a number.
+            # Some datasets may contain a number.
             # ------------------------------------------------
 
             if isinstance(
@@ -753,14 +929,6 @@ def get_2ka_count(menu):
                 "staff"
             )
 
-            # ------------------------------------------------
-            # If JSON contains:
-            #
-            # "staff": 26
-            #
-            # use 26.
-            # ------------------------------------------------
-
             if isinstance(
                 staff,
                 int
@@ -781,27 +949,105 @@ def get_2ka_count(menu):
 
 
 # ============================================================
-# EXTRACT STAFF
+# FIND COMBINED SB / ED
 # ============================================================
 
-def extract_episode_staff(
-    data,
-    episode
+def add_combined_storyboard_episode_director(
+    menu,
+    result
 ):
 
-    menu = find_episode_menu(
-        data,
-        episode
+    credits = menu.get(
+        "credits",
+        []
     )
 
-    if menu is None:
+    if not isinstance(
+        credits,
+        list
+    ):
+        return
 
-        print(
-            "No matching episode data "
-            "in this file."
+    for credit in credits:
+
+        if not isinstance(
+            credit,
+            dict
+        ):
+            continue
+
+        roles = credit.get(
+            "roles",
+            []
         )
 
-        return None
+        if not isinstance(
+            roles,
+            list
+        ):
+            continue
+
+        for role in roles:
+
+            if not isinstance(
+                role,
+                dict
+            ):
+                continue
+
+            role_name = normalize(
+                role.get(
+                    "name",
+                    ""
+                )
+            )
+
+            if (
+                "storyboard"
+                in role_name
+                and
+                "episode director"
+                in role_name
+            ):
+
+                staff = role.get(
+                    "staff",
+                    []
+                )
+
+                if not isinstance(
+                    staff,
+                    list
+                ):
+                    continue
+
+                names = []
+
+                for person in staff:
+
+                    name = get_staff_name(
+                        person
+                    )
+
+                    if name:
+                        names.append(
+                            name
+                        )
+
+                result["SB"].extend(
+                    names
+                )
+
+                result["ED"].extend(
+                    names
+                )
+
+
+# ============================================================
+# EXTRACT STANDARD STAFF
+# ============================================================
+
+def extract_standard_staff(menu):
 
     result = {
 
@@ -833,98 +1079,29 @@ def extract_episode_staff(
         "2KA": get_2ka_count(
             menu
         ),
+
+        # NEW
+        "CAD": find_roles(
+            menu,
+            "cad"
+        ),
+
+        # NEW
+        "CD": find_roles(
+            menu,
+            "cd"
+        ),
     }
 
-    # --------------------------------------------------------
-    # Some files use combined:
+    # Handle:
     #
     # Storyboard / Episode Director
     #
-    # If either is empty, try combined role.
-    # --------------------------------------------------------
 
-    credits = menu.get(
-        "credits",
-        []
+    add_combined_storyboard_episode_director(
+        menu,
+        result
     )
-
-    if isinstance(
-        credits,
-        list
-    ):
-
-        for credit in credits:
-
-            if not isinstance(
-                credit,
-                dict
-            ):
-                continue
-
-            roles = credit.get(
-                "roles",
-                []
-            )
-
-            if not isinstance(
-                roles,
-                list
-            ):
-                continue
-
-            for role in roles:
-
-                if not isinstance(
-                    role,
-                    dict
-                ):
-                    continue
-
-                role_name = normalize(
-                    role.get(
-                        "name",
-                        ""
-                    )
-                )
-
-                if (
-                    "storyboard"
-                    in role_name
-                    and
-                    "episode director"
-                    in role_name
-                ):
-
-                    names = []
-
-                    staff = role.get(
-                        "staff",
-                        []
-                    )
-
-                    if isinstance(
-                        staff,
-                        list
-                    ):
-
-                        for person in staff:
-
-                            name = get_staff_name(
-                                person
-                            )
-
-                            if name:
-                                names.append(
-                                    name
-                                )
-
-                    result["SB"].extend(
-                        names
-                    )
-
-                    result["ED"].extend(
-                        names
-                    )
 
     # Remove duplicates
 
@@ -934,6 +1111,8 @@ def extract_episode_staff(
         "AD",
         "Ass. AD",
         "KA",
+        "CAD",
+        "CD",
     ]:
 
         result[key] = list(
@@ -942,10 +1121,82 @@ def extract_episode_staff(
             )
         )
 
+    return result
+
+
+# ============================================================
+# EXTRACT THEME STAFF
+#
+# OP / ED:
+#
+# SB
+# ED
+# AD
+# Ass. AD
+# KA
+# 2KA
+# CAD
+# CD
+# Artist
+#
+# Artist comes from "Song".
+# ============================================================
+
+def extract_theme_staff(menu):
+
+    result = extract_standard_staff(
+        menu
+    )
+
+    # --------------------------------------------------------
+    # Artist
+    #
+    # Example:
+    #
+    # Song -> King Gnu
+    #
+    # becomes:
+    #
+    # Artist -> King Gnu
+    # --------------------------------------------------------
+
+    result["Artist"] = find_roles(
+        menu,
+        "song"
+    )
+
+    return result
+
+
+# ============================================================
+# EXTRACT EPISODE STAFF
+# ============================================================
+
+def extract_episode_staff(
+    data,
+    episode
+):
+
+    menu = find_episode_menu(
+        data,
+        episode
+    )
+
+    if menu is None:
+
+        print(
+            "No matching episode data "
+            "in this file."
+        )
+
+        return None
+
+    result = extract_standard_staff(
+        menu
+    )
+
     # --------------------------------------------------------
     # Is anything available?
-    #
-    # 2KA can be the only useful data.
     # --------------------------------------------------------
 
     useful = any(
@@ -956,6 +1207,57 @@ def extract_episode_staff(
             "AD",
             "Ass. AD",
             "KA",
+            "CAD",
+            "CD",
+        ]
+    )
+
+    if result["2KA"] > 0:
+        useful = True
+
+    if not useful:
+        return None
+
+    return result
+
+
+# ============================================================
+# EXTRACT OP / ED
+# ============================================================
+
+def extract_theme(
+    data,
+    theme
+):
+
+    menu = find_theme_menu(
+        data,
+        theme
+    )
+
+    if menu is None:
+
+        print(
+            f"No {theme.upper()} menu found."
+        )
+
+        return None
+
+    result = extract_theme_staff(
+        menu
+    )
+
+    useful = any(
+        result[key]
+        for key in [
+            "SB",
+            "ED",
+            "AD",
+            "Ass. AD",
+            "KA",
+            "CAD",
+            "CD",
+            "Artist",
         ]
     )
 
@@ -1006,20 +1308,6 @@ def find_matching_files(
     )
 
     if exact:
-
-        # IMPORTANT:
-        #
-        # If alias explicitly points to a JSON,
-        # only use that JSON.
-        #
-        # This prevents:
-        #
-        # csm reze
-        #
-        # from falling back to:
-        #
-        # chainsaw-man.json
-        #
 
         return [
             (
@@ -1216,6 +1504,154 @@ def get_staff(
 
 
 # ============================================================
+# GET OP / ED
+# ============================================================
+
+def get_theme_staff(
+    anime,
+    theme="op"
+):
+
+    anime_input = normalize(
+        anime
+    )
+
+    anime_slug = resolve_alias(
+        anime_input
+    )
+
+    print()
+    print("=" * 60)
+    print("THEME STAFF LOOKUP")
+    print("=" * 60)
+
+    print(
+        f"Input: {anime}"
+    )
+
+    print(
+        f"Anime: {anime_slug}"
+    )
+
+    print(
+        f"Theme: {theme.upper()}"
+    )
+
+    print()
+    print(
+        "Searching local staff files..."
+    )
+
+    matches = find_matching_files(
+        anime_slug
+    )
+
+    if not matches:
+
+        print()
+        print(
+            "No matching JSON files found."
+        )
+
+        return None
+
+    for score, filename in matches:
+
+        path = os.path.join(
+            BASE_DIR,
+            filename
+        )
+
+        print()
+        print(
+            f"Trying: {filename}"
+        )
+
+        data = load_json(
+            path
+        )
+
+        if data is None:
+            continue
+
+        staff = extract_theme(
+            data,
+            theme
+        )
+
+        if staff is None:
+            continue
+
+        print()
+        print(
+            f"Selected: {filename}"
+        )
+
+        title = data.get(
+            "title",
+            ""
+        )
+
+        if title:
+            print(
+                f"Title: {title}"
+            )
+
+        return staff
+
+    print()
+    print("=" * 60)
+    print("ERROR")
+    print("=" * 60)
+
+    print(
+        f"No {theme.upper()} staff data "
+        f"was found for {anime}."
+    )
+
+    return None
+
+
+# ============================================================
+# TERMINAL PRINT
+# ============================================================
+
+def print_staff(result):
+
+    if not result:
+
+        print(
+            "No staff found."
+        )
+
+        return
+
+    for role, names in result.items():
+
+        if not names:
+            continue
+
+        print()
+        print(
+            role
+        )
+
+        if role == "2KA":
+
+            print(
+                names
+            )
+
+        else:
+
+            for name in names:
+
+                print(
+                    f"- {name}"
+                )
+
+
+# ============================================================
 # TERMINAL TEST
 # ============================================================
 
@@ -1233,66 +1669,64 @@ if __name__ == "__main__":
         "Anime: "
     ).strip()
 
-    try:
+    mode = input(
+        "Type (episode/op/ed): "
+    ).strip().lower()
 
-        season = int(
-            input(
-                "Season: "
-            ).strip()
+    if mode in {
+        "op",
+        "opening",
+    }:
+
+        result = get_theme_staff(
+            anime,
+            "op"
         )
 
-    except ValueError:
+    elif mode in {
+        "ed",
+        "ending",
+    }:
 
-        season = 1
-
-    try:
-
-        episode = int(
-            input(
-                "Episode: "
-            ).strip()
-        )
-
-    except ValueError:
-
-        episode = 1
-
-    result = get_staff(
-        anime,
-        season,
-        episode
-    )
-
-    print()
-
-    if not result:
-
-        print(
-            "No staff found."
+        result = get_theme_staff(
+            anime,
+            "ed"
         )
 
     else:
 
-        for role, names in result.items():
+        try:
 
-            if not names:
-                continue
-
-            print()
-            print(
-                role
+            season = int(
+                input(
+                    "Season: "
+                ).strip()
             )
 
-            if role == "2KA":
+        except ValueError:
 
-                print(
-                    names
-                )
+            season = 1
 
-            else:
+        try:
 
-                for name in names:
+            episode = int(
+                input(
+                    "Episode: "
+                ).strip()
+            )
 
-                    print(
-                        f"- {name}"
-                    )
+        except ValueError:
+
+            episode = 1
+
+        result = get_staff(
+            anime,
+            season,
+            episode
+        )
+
+    print()
+
+    print_staff(
+        result
+    )
