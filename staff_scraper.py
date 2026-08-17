@@ -82,11 +82,11 @@ ANIME_ALIASES = {
     # To Be Hero X
     # --------------------------------------------------------
 
-    "to be hero x": "to_be_hero_x",
-    "to be hero": "to_be_hero_x",
-    "tbhx": "to_be_hero_x",
-    "tbh x": "to_be_hero_x",
-    "hero x": "to_be_hero_x",  
+    "to be hero x": "to-be-hero-x",
+    "to be hero": "to-be-hero-x",
+    "tbhx": "to-be-hero-x",
+    "tbh x": "to-be-hero-x",
+    "hero x": "to-be-hero-x",  
 
 
     # --------------------------------------------------------
