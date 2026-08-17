@@ -78,14 +78,15 @@ ANIME_ALIASES = {
         "black-clover-sword-of-the-wizard-king",
 
 
-    #---------------------------------------------------------
+    # --------------------------------------------------------
     # To Be Hero X
     # --------------------------------------------------------
 
     "to be hero x": "to_be_hero_x",
+    "to be hero": "to_be_hero_x",
     "tbhx": "to_be_hero_x",
     "tbh x": "to_be_hero_x",
-    "hero x": "to_be_hero_x",   
+    "hero x": "to_be_hero_x",  
 
 
     # --------------------------------------------------------
