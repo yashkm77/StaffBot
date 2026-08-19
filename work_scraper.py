@@ -6,6 +6,10 @@ import html as html_module
 import os
 
 
+# ============================================================
+# CONFIG
+# ============================================================
+
 BASE_URL = "https://keyframe-staff-list.com/staff"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -33,7 +37,6 @@ ROLE_NAMES = {
 # ============================================================
 
 NAME_ALIASES = {
-    # Common spelling variation
     "keiichiro watanabe": "keiichirou watanabe",
 }
 
@@ -52,16 +55,20 @@ def normalize(text):
     text = re.sub(
         r"[^a-z0-9]+",
         " ",
-        text
+        text,
     )
 
     text = " ".join(
         text.split()
     )
 
+    # --------------------------------------------------------
+    # Name spelling aliases
+    # --------------------------------------------------------
+
     return NAME_ALIASES.get(
         text,
-        text
+        text,
     )
 
 
@@ -73,7 +80,7 @@ def load_local_json(slug):
 
     path = os.path.join(
         BASE_DIR,
-        f"{slug}.json"
+        f"{slug}.json",
     )
 
     if not os.path.exists(path):
@@ -92,7 +99,7 @@ def load_local_json(slug):
         with open(
             path,
             "r",
-            encoding="utf-8"
+            encoding="utf-8",
         ) as f:
 
             return json.load(f)
@@ -114,33 +121,59 @@ def get_person_names(person):
 
     names = set()
 
-    for key in ("en", "ja"):
+    if not isinstance(
+        person,
+        dict,
+    ):
+        return names
 
-        value = person.get(key)
+    # --------------------------------------------------------
+    # Normal names
+    # --------------------------------------------------------
+
+    for key in (
+        "en",
+        "ja",
+    ):
+
+        value = person.get(
+            key
+        )
 
         if isinstance(
             value,
-            str
+            str,
         ) and value.strip():
 
             names.add(
                 normalize(value)
             )
 
-    pn = person.get("pn")
+    # --------------------------------------------------------
+    # Pen name / alternate name
+    # --------------------------------------------------------
+
+    pn = person.get(
+        "pn"
+    )
 
     if isinstance(
         pn,
-        dict
+        dict,
     ):
 
-        for key in ("en", "ja"):
+        for key in (
+            "en",
+            "ja",
+        ):
 
-            value = pn.get(key)
+            value = pn.get(
+                key
+            )
 
             if isinstance(
                 value,
-                str
+                str,
             ) and value.strip():
 
                 names.add(
@@ -151,35 +184,45 @@ def get_person_names(person):
 
 
 # ============================================================
-# MAIN / PEN NAME
+# GET MAIN NAME
 # ============================================================
 
 def get_main_name(person):
 
-    pn = person.get("pn")
+    if not isinstance(
+        person,
+        dict,
+    ):
+        return ""
+
+    pn = person.get(
+        "pn"
+    )
 
     if isinstance(
         pn,
-        dict
+        dict,
     ):
 
-        value = pn.get("en")
+        value = pn.get(
+            "en"
+        )
 
         if isinstance(
             value,
-            str
+            str,
         ) and value.strip():
 
             return value.strip()
 
     value = person.get(
         "en",
-        ""
+        "",
     )
 
     if isinstance(
         value,
-        str
+        str,
     ):
 
         return value.strip()
@@ -193,7 +236,7 @@ def get_main_name(person):
 
 def find_person_id(
     data,
-    animator
+    animator,
 ):
 
     target = normalize(
@@ -204,10 +247,12 @@ def find_person_id(
 
         if isinstance(
             obj,
-            dict
+            dict,
         ):
 
-            if target in get_person_names(obj):
+            if target in get_person_names(
+                obj
+            ):
 
                 person_id = obj.get(
                     "id"
@@ -221,19 +266,23 @@ def find_person_id(
 
             for value in obj.values():
 
-                result = walk(value)
+                result = walk(
+                    value
+                )
 
                 if result:
                     return result
 
         elif isinstance(
             obj,
-            list
+            list,
         ):
 
             for value in obj:
 
-                result = walk(value)
+                result = walk(
+                    value
+                )
 
                 if result:
                     return result
@@ -248,14 +297,14 @@ def find_person_id(
 # ============================================================
 
 def extract_staff_list_data(
-    page_html
+    page_html,
 ):
 
     pattern = re.compile(
         r'<script[^>]+id=["\']staffListData["\'][^>]*>'
         r'(.*?)'
         r'</script>',
-        re.DOTALL | re.IGNORECASE
+        re.DOTALL | re.IGNORECASE,
     )
 
     match = pattern.search(
@@ -316,22 +365,21 @@ def get_work_label(menu_name):
 
     if re.fullmatch(
         r"op\s*\d+",
-        normalized
+        normalized,
     ):
 
         return menu_name
 
     if re.fullmatch(
         r"ed\s*\d+",
-        normalized
+        normalized,
     ):
 
         return menu_name
 
     # --------------------------------------------------------
-    # Normal episode
-    #
     # IMPORTANT:
+    #
     # Keep the ORIGINAL KFSL menu name.
     #
     # Examples:
@@ -357,21 +405,21 @@ def get_work_type(menu_name):
 
     if re.fullmatch(
         r"op\s*\d+",
-        normalized
+        normalized,
     ):
 
         return "OP"
 
     if re.fullmatch(
         r"ed\s*\d+",
-        normalized
+        normalized,
     ):
 
         return "ED"
 
     if re.search(
         r"\d+",
-        normalized
+        normalized,
     ):
 
         return "EPISODE"
@@ -392,17 +440,17 @@ def get_episode_number(menu_name):
         menu_name
     )
 
-    # OP / ED should not become episode 1
+    # OP / ED must not become episode 1
     if re.fullmatch(
         r"(op|ed)\s*\d+",
-        normalized
+        normalized,
     ):
 
         return None
 
     match = re.search(
         r"#?\s*(\d+)",
-        str(menu_name)
+        str(menu_name),
     )
 
     if not match:
@@ -420,52 +468,42 @@ def get_episode_number(menu_name):
 
 
 # ============================================================
-# EPISODES / WORKS
+# GET EPISODE DATA
 # ============================================================
 
 def get_episode_data(data):
 
     episodes = []
 
-    # --------------------------------------------------------
-    # KFSL JSON can be:
-    #
-    # {
-    #     "menus": [...]
-    # }
-    #
-    # OR directly:
-    #
-    # [...]
-    # --------------------------------------------------------
-
-    if isinstance(data, dict):
-
-        menus = data.get(
-            "menus",
-            []
-        )
-
-    elif isinstance(data, list):
-
-        menus = data
-
-    else:
-
+    if not isinstance(
+        data,
+        dict,
+    ):
         return episodes
 
-    if not isinstance(menus, list):
+    menus = data.get(
+        "menus",
+        [],
+    )
+
+    if not isinstance(
+        menus,
+        list,
+    ):
         return episodes
 
     for menu in menus:
 
-        if not isinstance(menu, dict):
+        if not isinstance(
+            menu,
+            dict,
+        ):
             continue
 
         menu_name = str(
             menu.get(
                 "name",
-                ""
+                "",
             )
         ).strip()
 
@@ -473,13 +511,12 @@ def get_episode_data(data):
             continue
 
         credits = menu.get(
-            "credits",
-            []
+            "credits"
         )
 
         if not isinstance(
             credits,
-            list
+            list,
         ):
             continue
 
@@ -495,12 +532,13 @@ def get_episode_data(data):
         )
 
         episodes.append({
+
             "episode": episode_number,
 
-            # IMPORTANT:
-            # Keep exact KFSL label.
+            # Original KFSL menu
             "name": menu_name,
 
+            # Original work label
             "work_name": get_work_label(
                 menu_name
             ),
@@ -508,51 +546,11 @@ def get_episode_data(data):
             "work_type": work_type,
 
             "credits": credits,
+
         })
 
     # --------------------------------------------------------
     # SORT
-    # --------------------------------------------------------
-
-    def sort_key(item):
-
-        work_type = item.get(
-            "work_type"
-        )
-
-        episode = item.get(
-            "episode"
-        )
-
-        if work_type == "OP":
-            priority = 0
-
-        elif work_type == "EPISODE":
-            priority = 1
-
-        elif work_type == "ED":
-            priority = 2
-
-        else:
-            priority = 3
-
-        return (
-            priority,
-            episode if episode is not None else 9999,
-            item.get(
-                "work_name",
-                ""
-            ),
-        )
-
-    episodes.sort(
-        key=sort_key
-    )
-
-    return episodes
-
-    # --------------------------------------------------------
-    # Sorting
     # --------------------------------------------------------
 
     def sort_key(item):
@@ -584,8 +582,8 @@ def get_episode_data(data):
             else 9999,
             item.get(
                 "work_name",
-                ""
-            )
+                "",
+            ),
         )
 
     episodes.sort(
@@ -596,12 +594,147 @@ def get_episode_data(data):
 
 
 # ============================================================
+# NORMALIZE ROLE NAME
+# ============================================================
+
+def normalize_role_name(role_name):
+
+    if not role_name:
+        return ""
+
+    text = str(
+        role_name
+    ).strip()
+
+    normalized = normalize(
+        text
+    )
+
+    # --------------------------------------------------------
+    # Key Animation
+    # --------------------------------------------------------
+
+    if normalized in (
+        "key animation",
+        "key animator",
+        "key animation原画",
+    ):
+
+        return "Key Animation"
+
+    # --------------------------------------------------------
+    # Storyboard
+    # --------------------------------------------------------
+
+    if normalized == "storyboard":
+
+        return "Storyboard"
+
+    # --------------------------------------------------------
+    # Episode Director
+    # --------------------------------------------------------
+
+    if normalized == "episode director":
+
+        return "Episode Director"
+
+    # --------------------------------------------------------
+    # Animation Director
+    # --------------------------------------------------------
+
+    if normalized == "animation director":
+
+        return "Animation Director"
+
+    # --------------------------------------------------------
+    # Assistant Animation Director
+    # --------------------------------------------------------
+
+    if normalized in (
+        "assistant animation director",
+        "assistant animation director aad",
+    ):
+
+        return "Assistant Animation Director"
+
+    # --------------------------------------------------------
+    # Chief Animation Director
+    # --------------------------------------------------------
+
+    if normalized == "chief animation director":
+
+        return "Chief Animation Director"
+
+    # --------------------------------------------------------
+    # 2nd Key Animation
+    # --------------------------------------------------------
+
+    if normalized in (
+        "2nd key animation",
+        "second key animation",
+    ):
+
+        return "2nd Key Animation"
+
+    # --------------------------------------------------------
+    # Storyboard / Episode Director
+    # --------------------------------------------------------
+
+    if normalized in (
+        "storyboard episode director",
+        "storyboard episode director ed",
+    ):
+
+        return "Storyboard / Episode Director"
+
+    # --------------------------------------------------------
+    # Character Design
+    # --------------------------------------------------------
+
+    if normalized == "character design":
+
+        return "Character Design"
+
+    # --------------------------------------------------------
+    # Art Director
+    # --------------------------------------------------------
+
+    if normalized == "art director":
+
+        return "Art Director"
+
+    # --------------------------------------------------------
+    # Art Board
+    # --------------------------------------------------------
+
+    if normalized == "art board":
+
+        return "Art Board"
+
+    # --------------------------------------------------------
+    # Main Animator
+    # --------------------------------------------------------
+
+    if normalized == "main animator":
+
+        return "Main Animator"
+
+    # --------------------------------------------------------
+    # Unknown role
+    #
+    # Keep original role.
+    # --------------------------------------------------------
+
+    return text
+
+
+# ============================================================
 # SEARCH ONE WORK
 # ============================================================
 
 def search_episode(
     episode,
-    animator
+    animator,
 ):
 
     target = normalize(
@@ -612,86 +745,86 @@ def search_episode(
 
     credits = episode.get(
         "credits",
-        []
+        [],
     )
 
     if not isinstance(
         credits,
-        list
+        list,
     ):
-
         return results
 
     for credit_group in credits:
 
         if not isinstance(
             credit_group,
-            dict
+            dict,
         ):
-
             continue
 
         roles = credit_group.get(
             "roles",
-            []
+            [],
         )
 
         if not isinstance(
             roles,
-            list
+            list,
         ):
-
             continue
 
         for role in roles:
 
             if not isinstance(
                 role,
-                dict
+                dict,
             ):
-
                 continue
 
             role_name = str(
                 role.get(
                     "name",
-                    ""
+                    "",
                 )
             ).strip()
 
             if not role_name:
                 continue
 
-            display_role = ROLE_NAMES.get(
-                role_name,
+            # =================================================
+            # IMPORTANT
+            #
+            # NEVER change "Key Animation" to "KA" here.
+            #
+            # Main.py needs the canonical name.
+            # =================================================
+
+            canonical_role = normalize_role_name(
                 role_name
             )
 
             staff = role.get(
                 "staff",
-                []
+                [],
             )
 
             if not isinstance(
                 staff,
-                list
+                list,
             ):
-
                 continue
 
             for person in staff:
 
                 if not isinstance(
                     person,
-                    dict
+                    dict,
                 ):
-
                     continue
 
                 if person.get(
                     "isStudio"
                 ):
-
                     continue
 
                 names = get_person_names(
@@ -703,14 +836,13 @@ def search_episode(
 
                 displayed_name = person.get(
                     "en",
-                    ""
+                    "",
                 )
 
                 if not isinstance(
                     displayed_name,
-                    str
+                    str,
                 ):
-
                     displayed_name = ""
 
                 displayed_name = displayed_name.strip()
@@ -727,28 +859,26 @@ def search_episode(
                         "id"
                     ),
 
-                    "role": display_role,
+                    # Canonical role
+                    "role": canonical_role,
 
-                    # ----------------------------------------
-                    # IMPORTANT:
-                    # Preserve original KFSL work.
-                    # ----------------------------------------
-
+                    # Numeric episode
                     "episode": episode.get(
                         "episode"
                     ),
 
+                    # ORIGINAL KFSL work name
                     "work_name": episode.get(
                         "work_name",
                         episode.get(
                             "name",
-                            ""
-                        )
+                            "",
+                        ),
                     ),
 
                     "work_type": episode.get(
                         "work_type",
-                        "EPISODE"
+                        "EPISODE",
                     ),
 
                 })
@@ -764,7 +894,7 @@ def search_local_json(
     data,
     anime_title,
     slug,
-    animator
+    animator,
 ):
 
     results = []
@@ -794,27 +924,27 @@ def search_local_json(
 
                 "work_name": match.get(
                     "work_name",
-                    ""
+                    "",
                 ),
 
                 "work_type": match.get(
                     "work_type",
-                    "EPISODE"
+                    "EPISODE",
                 ),
 
                 "role": match.get(
                     "role",
-                    ""
+                    "",
                 ),
 
                 "name": match.get(
                     "name",
-                    ""
+                    "",
                 ),
 
                 "main_name": match.get(
                     "main_name",
-                    ""
+                    "",
                 ),
 
                 "id": match.get(
@@ -832,7 +962,7 @@ def search_local_json(
 
 async def get_anime_page(
     session,
-    slug
+    slug,
 ):
 
     url = f"{BASE_URL}/{slug}"
@@ -852,7 +982,6 @@ async def get_anime_page(
             )
 
             if response.status != 200:
-
                 return None
 
             return await response.text()
@@ -872,7 +1001,7 @@ async def get_anime_page(
 
 async def get_staff_profile(
     session,
-    person_id
+    person_id,
 ):
 
     possible_urls = [
@@ -896,16 +1025,10 @@ async def get_staff_profile(
 
                 text = await response.text()
 
-                # --------------------------------------------
-                # We no longer depend on profile links.
-                #
-                # The bot displays work numbers directly.
-                # --------------------------------------------
-
                 match = re.search(
                     r'href=["\'](/staff/[a-f0-9]{40,})',
                     text,
-                    re.IGNORECASE
+                    re.IGNORECASE,
                 )
 
                 if match:
@@ -925,9 +1048,7 @@ async def get_staff_profile(
 # BUILD GROUPED WORKS
 # ============================================================
 
-def build_grouped_works(
-    results
-):
+def build_grouped_works(results):
 
     grouped = {}
 
@@ -935,25 +1056,35 @@ def build_grouped_works(
 
         role = result.get(
             "role",
-            ""
+            "",
         )
 
         if not role:
             continue
 
-        grouped.setdefault(
-            role,
-            []
+        # =====================================================
+        # ALWAYS NORMALIZE ROLE AGAIN
+        #
+        # This protects us from old/cached scraper data.
+        # =====================================================
+
+        role = normalize_role_name(
+            role
         )
 
-        # ----------------------------------------------------
-        # ALWAYS use the original KFSL work label.
-        # ----------------------------------------------------
+        grouped.setdefault(
+            role,
+            [],
+        )
+
+        # =====================================================
+        # KEEP ORIGINAL KFSL WORK NAME
+        # =====================================================
 
         work_name = str(
             result.get(
                 "work_name",
-                ""
+                "",
             )
         ).strip()
 
@@ -970,7 +1101,6 @@ def build_grouped_works(
                 )
 
             else:
-
                 continue
 
         if work_name not in grouped[role]:
@@ -989,19 +1119,19 @@ def build_grouped_works(
 async def get_animator_works(
     animator,
     anime_slug,
-    anime_title=None
+    anime_title=None,
 ):
 
     if not anime_title:
 
         anime_title = anime_slug.replace(
             "-",
-            " "
+            " ",
         ).title()
 
-    # --------------------------------------------------------
+    # ========================================================
     # LOCAL JSON
-    # --------------------------------------------------------
+    # ========================================================
 
     data = load_local_json(
         anime_slug
@@ -1013,7 +1143,7 @@ async def get_animator_works(
             data,
             anime_title,
             anime_slug,
-            animator
+            animator,
         )
 
         if not results:
@@ -1063,7 +1193,7 @@ async def get_animator_works(
 
         async with aiohttp.ClientSession(
             headers=headers,
-            timeout=timeout
+            timeout=timeout,
         ) as session:
 
             profile_url = None
@@ -1072,7 +1202,7 @@ async def get_animator_works(
 
                 profile_url = await get_staff_profile(
                     session,
-                    person_id
+                    person_id,
                 )
 
         grouped = build_grouped_works(
@@ -1096,9 +1226,9 @@ async def get_animator_works(
 
         }
 
-    # --------------------------------------------------------
+    # ========================================================
     # NO LOCAL JSON
-    # --------------------------------------------------------
+    # ========================================================
 
     headers = {
 
@@ -1108,7 +1238,7 @@ async def get_animator_works(
             "AppleWebKit/605.1.15 "
             "(KHTML, like Gecko) "
             "Version/26.0 Safari/605.1.15"
-        )
+        ),
 
     }
 
@@ -1118,12 +1248,12 @@ async def get_animator_works(
 
     async with aiohttp.ClientSession(
         headers=headers,
-        timeout=timeout
+        timeout=timeout,
     ) as session:
 
         page = await get_anime_page(
             session,
-            anime_slug
+            anime_slug,
         )
 
         if not page:
@@ -1166,7 +1296,7 @@ async def get_animator_works(
             data,
             anime_title,
             anime_slug,
-            animator
+            animator,
         )
 
         grouped = build_grouped_works(
@@ -1185,7 +1315,7 @@ async def get_animator_works(
 
             profile_url = await get_staff_profile(
                 session,
-                person_id
+                person_id,
             )
 
         return {
@@ -1225,7 +1355,7 @@ async def test():
     works = await get_animator_works(
         animator,
         slug,
-        anime_title
+        anime_title,
     )
 
     print("=" * 70)

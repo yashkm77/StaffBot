@@ -23,9 +23,12 @@ from work_scraper import (
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv(
+    "DISCORD_TOKEN"
+)
 
 if not TOKEN:
+
     raise RuntimeError(
         "DISCORD_TOKEN is missing.\n"
         "Create a .env file containing:\n"
@@ -61,18 +64,31 @@ EMBED_COLOR = discord.Color.from_rgb(
 # ============================================================
 
 ROLE_SHORT_NAMES = {
+
     "Main Animator": "MA",
+
     "Key Animation": "KA",
+
     "Animation Director": "AD",
+
     "Assistant Animation Director": "Ass. AD",
+
     "Chief Animation Director": "CAD",
+
     "Storyboard": "SB",
+
     "Episode Director": "ED",
+
     "Storyboard / Episode Director": "SB/ED",
+
     "Character Design": "CD",
+
     "Art Board": "AB",
+
     "2nd Key Animation": "2KA",
+
     "Art Director": "Art Director",
+
 }
 
 
@@ -82,82 +98,155 @@ ROLE_SHORT_NAMES = {
 
 def detect_season(anime):
 
-    normalized = normalize(anime)
+    normalized = normalize(
+        anime
+    )
 
     if normalized in ANIME_ALIASES:
 
-        alias_slug = ANIME_ALIASES[normalized]
+        alias_slug = ANIME_ALIASES[
+            normalized
+        ]
 
+        # ----------------------------------------------------
         # Frieren
+        # ----------------------------------------------------
+
         if alias_slug == "sousou-no-frieren-2nd-season":
+
             return 2
 
+        # ----------------------------------------------------
         # My Hero Academia
-        for number in range(2, 8):
-            if alias_slug == f"my-hero-academia-{number}":
+        # ----------------------------------------------------
+
+        for number in range(
+            2,
+            8,
+        ):
+
+            if alias_slug == (
+                f"my-hero-academia-{number}"
+            ):
+
                 return number
 
-        if alias_slug == "my-hero-academia-final-season":
+        if alias_slug == (
+            "my-hero-academia-final-season"
+        ):
+
             return 8
 
+        # ----------------------------------------------------
         # Jujutsu Kaisen
+        # ----------------------------------------------------
+
         if alias_slug == "jujutsu-kaisen":
+
             return 1
 
-        if alias_slug == "jujutsu-kaisen-2nd-season":
+        if alias_slug == (
+            "jujutsu-kaisen-2nd-season"
+        ):
+
             return 2
 
-        if alias_slug == "jujutsu-kaisen-3rd-season-culling-game-part-1":
+        if alias_slug == (
+            "jujutsu-kaisen-3rd-season-culling-game-part-1"
+        ):
+
             return 3
 
-        if alias_slug == "jujutsu-kaisen-4th-season-culling-game-part-2":
+        if alias_slug == (
+            "jujutsu-kaisen-4th-season-culling-game-part-2"
+        ):
+
             return 4
 
+        # ----------------------------------------------------
         # Bleach TYBW
-        if alias_slug == "bleach-thousand-year-blood-war":
+        # ----------------------------------------------------
+
+        if alias_slug == (
+            "bleach-thousand-year-blood-war"
+        ):
+
             return 1
 
-        if alias_slug == "bleach-thousand-year-blood-war-the-separation":
+        if alias_slug == (
+            "bleach-thousand-year-blood-war-the-separation"
+        ):
+
             return 2
 
-        if alias_slug == "bleach-thousand-year-blood-war-the-conflict":
+        if alias_slug == (
+            "bleach-thousand-year-blood-war-the-conflict"
+        ):
+
             return 3
 
-        if alias_slug == "bleach-thousand-year-blood-war-the-calamity":
+        if alias_slug == (
+            "bleach-thousand-year-blood-war-the-calamity"
+        ):
+
             return 4
 
-        # Mob Psycho
+        # ----------------------------------------------------
+        # Mob Psycho 100
+        # ----------------------------------------------------
+
         if alias_slug == "mob-psycho-100":
+
             return 1
 
         if alias_slug == "mob-psycho-100-ii":
+
             return 2
 
         if alias_slug == "mob-psycho-100-iii":
+
             return 3
 
+        # ----------------------------------------------------
         # One Punch Man
+        # ----------------------------------------------------
+
         if alias_slug == "one-punch-man":
+
             return 1
 
         if alias_slug == "one-punch-man-2":
+
             return 2
 
         if alias_slug == "one-punch-man-3":
+
             return 3
 
+        # ----------------------------------------------------
         # Solo Leveling
+        # ----------------------------------------------------
+
         if alias_slug == "solo-leveling":
+
             return 1
 
-        if alias_slug == "solo-leveling-season-2-arise-from-the-shadow":
+        if alias_slug == (
+            "solo-leveling-season-2-arise-from-the-shadow"
+        ):
+
             return 2
 
+        # ----------------------------------------------------
         # Naruto
+        # ----------------------------------------------------
+
         if alias_slug == "naruto":
+
             return 1
 
         if alias_slug == "naruto-shippuuden":
+
             return 2
 
     match = re.search(
@@ -166,9 +255,15 @@ def detect_season(anime):
     )
 
     if match:
+
         try:
-            return int(match.group(1))
+
+            return int(
+                match.group(1)
+            )
+
         except ValueError:
+
             pass
 
     return 1
@@ -180,16 +275,23 @@ def detect_season(anime):
 
 def get_anime_slug(anime):
 
-    normalized = normalize(anime)
+    normalized = normalize(
+        anime
+    )
 
     if normalized in ANIME_ALIASES:
-        return ANIME_ALIASES[normalized]
 
-    return re.sub(
+        return ANIME_ALIASES[
+            normalized
+        ]
+
+    slug = re.sub(
         r"[^a-z0-9]+",
         "-",
         normalized,
     ).strip("-")
+
+    return slug
 
 
 # ============================================================
@@ -201,24 +303,33 @@ def format_names(names):
     if not names:
         return None
 
-    if not isinstance(names, list):
-        names = [names]
+    names = list(
+        dict.fromkeys(
+            names
+        )
+    )
 
-    names = list(dict.fromkeys(names))
-
-    return ", ".join(str(name) for name in names)
+    return ", ".join(
+        str(name)
+        for name in names
+    )
 
 
 # ============================================================
 # SPLIT LONG FIELD
 # ============================================================
 
-def split_text(text, limit=1024):
+def split_text(
+    text,
+    limit=1024,
+):
 
     if len(text) <= limit:
+
         return [text]
 
     parts = []
+
     current = ""
 
     pieces = [
@@ -232,17 +343,34 @@ def split_text(text, limit=1024):
             continue
 
         if not current:
+
             current = piece
 
-        elif len(current) + len(piece) + 2 <= limit:
-            current += ", " + piece
+        elif (
+            len(current)
+            + len(piece)
+            + 2
+            <= limit
+        ):
+
+            current += (
+                ", "
+                + piece
+            )
 
         else:
-            parts.append(current)
+
+            parts.append(
+                current
+            )
+
             current = piece
 
     if current:
-        parts.append(current)
+
+        parts.append(
+            current
+        )
 
     return parts
 
@@ -261,19 +389,34 @@ def add_staff_fields(
     if not names:
         return
 
-    text = format_names(names)
+    text = format_names(
+        names
+    )
 
     if not text:
         return
 
+    chunks = split_text(
+        text,
+        1024,
+    )
+
     for index, chunk in enumerate(
-        split_text(text, 1024)
+        chunks
     ):
 
         if index == 0:
-            field_name = f"{emoji} {title}"
+
+            field_name = (
+                f"{emoji} {title}"
+            )
+
         else:
-            field_name = f"{emoji} {title} (continued)"
+
+            field_name = (
+                f"{emoji} {title} "
+                "(continued)"
+            )
 
         embed.add_field(
             name=field_name,
@@ -286,15 +429,15 @@ def add_staff_fields(
 # FORMAT WORK EPISODES
 # ============================================================
 
-def format_work_episodes(episodes):
+def format_work_episodes(
+    episodes
+):
 
     if not episodes:
         return ""
 
-    if not isinstance(episodes, list):
-        episodes = [episodes]
-
     formatted = []
+
     seen = set()
 
     for episode in episodes:
@@ -302,7 +445,9 @@ def format_work_episodes(episodes):
         if episode is None:
             continue
 
-        text = str(episode).strip()
+        text = str(
+            episode
+        ).strip()
 
         if not text:
             continue
@@ -324,74 +469,96 @@ def format_work_episodes(episodes):
             )
 
             if normalized not in seen:
-                formatted.append(normalized)
-                seen.add(normalized)
+
+                formatted.append(
+                    normalized
+                )
+
+                seen.add(
+                    normalized
+                )
 
             continue
 
         # ----------------------------------------------------
-        # Preserve KFSL labels:
-        #
-        # #17
-        # 17
-        # 17 (BD)
-        # #17 (BD)
+        # Already formatted
         # ----------------------------------------------------
 
-        if re.fullmatch(
-            r"#?\s*\d+(?:\s*\([^)]*\))?",
-            text,
-        ):
+        if text.startswith("#"):
 
-            match = re.match(
-                r"#?\s*(\d+)(.*)",
-                text,
+            if text not in seen:
+
+                formatted.append(
+                    text
+                )
+
+                seen.add(
+                    text
+                )
+
+            continue
+
+        # ----------------------------------------------------
+        # Numeric episode
+        # ----------------------------------------------------
+
+        if text.isdigit():
+
+            number = int(
+                text
             )
 
-            number = int(match.group(1))
-            suffix = match.group(2).strip()
+            formatted_text = (
+                f"#{number:02d}"
+            )
 
-            # Keep BD / NC / etc.
-            if suffix:
-                formatted_text = (
-                    f"{number:02d} {suffix}"
+            if (
+                formatted_text
+                not in seen
+            ):
+
+                formatted.append(
+                    formatted_text
                 )
-            else:
-                formatted_text = (
-                    f"#{number:02d}"
+
+                seen.add(
+                    formatted_text
                 )
-
-            if suffix:
-                # If original had #, preserve it.
-                if text.lstrip().startswith("#"):
-                    formatted_text = (
-                        f"#{number:02d} {suffix}"
-                    )
-
-            if formatted_text not in seen:
-                formatted.append(formatted_text)
-                seen.add(formatted_text)
 
             continue
 
         # ----------------------------------------------------
-        # Everything else
+        # Anything else
         # ----------------------------------------------------
 
         if text not in seen:
-            formatted.append(text)
-            seen.add(text)
 
-    return ", ".join(formatted)
+            formatted.append(
+                text
+            )
+
+            seen.add(
+                text
+            )
+
+    return ", ".join(
+        formatted
+    )
 
 
 # ============================================================
 # NORMALIZE WORK GROUPS
 # ============================================================
 
-def normalize_work_groups(groups):
+def normalize_work_groups(
+    groups
+):
 
-    if not isinstance(groups, dict):
+    if not isinstance(
+        groups,
+        dict,
+    ):
+
         return {}
 
     normalized_groups = {}
@@ -401,50 +568,50 @@ def normalize_work_groups(groups):
         if not role:
             continue
 
-        role = str(role).strip()
-
         # ----------------------------------------------------
         # List format
         #
-        # "Storyboard": [17, "17 (BD)"]
+        # "Storyboard": [17]
         # ----------------------------------------------------
 
-        if isinstance(info, list):
+        if isinstance(
+            info,
+            list,
+        ):
 
-            normalized_groups[role] = {
-                "episodes": info,
-                "short": ROLE_SHORT_NAMES.get(
-                    role,
-                    role,
-                ),
-            }
+            normalized_groups[role] = info
 
             continue
 
         # ----------------------------------------------------
         # Dict format
+        #
+        # "Storyboard": {
+        #     "episodes": [17],
+        #     "short": "SB"
+        # }
         # ----------------------------------------------------
 
-        if isinstance(info, dict):
+        if isinstance(
+            info,
+            dict,
+        ):
 
             episodes = info.get(
                 "episodes",
                 [],
             )
 
-            if not isinstance(episodes, list):
-                episodes = [episodes]
+            if not isinstance(
+                episodes,
+                list,
+            ):
 
-            normalized_groups[role] = {
-                "episodes": episodes,
-                "short": info.get(
-                    "short",
-                    ROLE_SHORT_NAMES.get(
-                        role,
-                        role,
-                    ),
-                ),
-            }
+                episodes = [
+                    episodes
+                ]
+
+            normalized_groups[role] = episodes
 
     return normalized_groups
 
@@ -457,9 +624,18 @@ def normalize_work_groups(groups):
 async def on_ready():
 
     print()
-    print("=" * 60)
-    print(f"Logged in as {bot.user}")
-    print("=" * 60)
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        f"Logged in as {bot.user}"
+    )
+
+    print(
+        "=" * 60
+    )
 
     try:
 
@@ -501,22 +677,37 @@ async def staff(
     if not episode:
 
         await interaction.followup.send(
-            "❌ Please enter an episode number or OP/ED."
+            "❌ Please enter an episode number or OP/ED.\n\n"
+            "Examples:\n"
+            "`1`\n"
+            "`12`\n"
+            "`op1`\n"
+            "`op2`\n"
+            "`ed1`\n"
+            "`ed2`"
         )
+
         return
 
     if episode.isdigit():
 
-        if int(episode) < 1:
+        episode_number = int(
+            episode
+        )
+
+        if episode_number < 1:
 
             await interaction.followup.send(
                 "❌ Episode must be 1 or higher."
             )
+
             return
 
     else:
 
-        normalized_episode = normalize(episode)
+        normalized_episode = normalize(
+            episode
+        )
 
         if not re.fullmatch(
             r"(op|ed)\s*\d+",
@@ -524,21 +715,51 @@ async def staff(
         ):
 
             await interaction.followup.send(
-                "❌ Invalid episode.\n"
-                "Use `1`, `12`, `OP1`, `OP2`, `ED1`, etc."
+                "❌ Invalid episode.\n\n"
+                "Use something like:\n"
+                "`1`\n"
+                "`12`\n"
+                "`op1`\n"
+                "`op2`\n"
+                "`ed1`\n"
+                "`ed2`"
             )
+
             return
 
-    season = detect_season(anime)
+    season = detect_season(
+        anime
+    )
 
     print()
-    print("=" * 60)
-    print("STAFF DISCORD COMMAND")
-    print("=" * 60)
-    print(f"Input:   {anime}")
-    print(f"Season:  {season}")
-    print(f"Episode: {episode}")
-    print("=" * 60)
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        "STAFF DISCORD COMMAND"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        f"Input:   {anime}"
+    )
+
+    print(
+        f"Season:  {season}"
+    )
+
+    print(
+        f"Episode: {episode}"
+    )
+
+    print(
+        "=" * 60
+    )
 
     try:
 
@@ -550,12 +771,15 @@ async def staff(
 
     except Exception as e:
 
-        print(f"STAFF ERROR: {e!r}")
+        print(
+            f"STAFF ERROR: {e!r}"
+        )
 
         await interaction.followup.send(
             "❌ Staff lookup encountered an error.\n"
             f"`{type(e).__name__}: {e}`"
         )
+
         return
 
     if not data:
@@ -563,9 +787,11 @@ async def staff(
         embed = discord.Embed(
             title="Episode Staff Credits",
             description=(
-                f"**{anime}** — Season {season} "
+                f"**{anime}** — "
+                f"Season {season} "
                 f"Episode {episode}\n\n"
-                "**No relevant staff credits found.**"
+                "**No relevant staff credits "
+                "found for this episode.**"
             ),
             color=EMBED_COLOR,
         )
@@ -577,78 +803,145 @@ async def staff(
         await interaction.followup.send(
             embed=embed
         )
+
         return
 
-    is_theme = episode.lower().startswith(("op", "ed"))
+    is_theme = episode.lower().startswith(
+        ("op", "ed")
+    )
 
     if is_theme:
-        title = (
-            "Opening Staff"
-            if episode.lower().startswith("op")
-            else "Ending Staff"
-        )
+
+        if episode.lower().startswith(
+            "op"
+        ):
+
+            title = "Opening Staff"
+
+        else:
+
+            title = "Ending Staff"
+
     else:
+
         title = "Episode Staff Credits"
 
     embed = discord.Embed(
         title=title,
         description=(
-            f"**{anime}** — Season {season} "
+            f"**{anime}** — "
+            f"Season {season} "
             f"Episode {episode}"
         ),
         color=EMBED_COLOR,
     )
 
+    # --------------------------------------------------------
+    # STORYBOARD
+    # --------------------------------------------------------
+
     add_staff_fields(
         embed,
         "🎬",
         "Storyboard",
-        data.get("SB", []),
+        data.get(
+            "SB",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # EPISODE DIRECTOR
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "🎞️",
         "Episode Director",
-        data.get("ED", []),
+        data.get(
+            "ED",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # ANIMATION DIRECTOR
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "✏️",
         "Animation Director",
-        data.get("AD", []),
+        data.get(
+            "AD",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # ASSISTANT ANIMATION DIRECTOR
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "🧩",
         "Assistant Animation Director",
-        data.get("Ass. AD", []),
+        data.get(
+            "Ass. AD",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # CHIEF ANIMATION DIRECTOR
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "👑",
         "Chief Animation Director",
-        data.get("CAD", []),
+        data.get(
+            "CAD",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # CHARACTER DESIGN
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "🎨",
         "Character Design",
-        data.get("CD", []),
+        data.get(
+            "CD",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # KEY ANIMATION
+    # --------------------------------------------------------
 
     add_staff_fields(
         embed,
         "🔥",
         "Key Animation",
-        data.get("KA", []),
+        data.get(
+            "KA",
+            [],
+        ),
     )
 
-    second_ka = data.get("2KA", 0)
+    # --------------------------------------------------------
+    # 2ND KEY ANIMATION
+    # --------------------------------------------------------
+
+    second_ka = data.get(
+        "2KA",
+        0,
+    )
 
     if second_ka:
 
@@ -658,12 +951,23 @@ async def staff(
             inline=False,
         )
 
+    # --------------------------------------------------------
+    # ARTIST
+    # --------------------------------------------------------
+
     add_staff_fields(
         embed,
         "🎵",
         "Artist",
-        data.get("Artist", []),
+        data.get(
+            "Artist",
+            [],
+        ),
     )
+
+    # --------------------------------------------------------
+    # FOOTER
+    # --------------------------------------------------------
 
     embed.set_footer(
         text="Sakuga Staff • KeyFrame / KFSL dataset"
@@ -675,10 +979,15 @@ async def staff(
             embed=embed
         )
 
-    except discord.HTTPException:
+    except discord.HTTPException as e:
+
+        print(
+            f"EMBED ERROR: {e!r}"
+        )
 
         await interaction.followup.send(
-            "❌ The staff list was too large."
+            "❌ The staff list was too large "
+            "to display in the embed."
         )
 
 
@@ -702,7 +1011,12 @@ async def work(
 
     await interaction.response.defer()
 
+    # ========================================================
+    # CLEAN INPUT
+    # ========================================================
+
     anime = anime.strip()
+
     animator = animator.strip()
 
     if not anime:
@@ -710,6 +1024,7 @@ async def work(
         await interaction.followup.send(
             "❌ Please enter an anime name."
         )
+
         return
 
     if not animator:
@@ -717,18 +1032,50 @@ async def work(
         await interaction.followup.send(
             "❌ Please enter an animator name."
         )
+
         return
 
-    slug = get_anime_slug(anime)
+    # ========================================================
+    # GET SLUG
+    # ========================================================
+
+    slug = get_anime_slug(
+        anime
+    )
 
     print()
-    print("=" * 60)
-    print("WORK DISCORD COMMAND")
-    print("=" * 60)
-    print(f"Anime:    {anime}")
-    print(f"Slug:     {slug}")
-    print(f"Animator: {animator}")
-    print("=" * 60)
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        "WORK DISCORD COMMAND"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        f"Anime:    {anime}"
+    )
+
+    print(
+        f"Slug:     {slug}"
+    )
+
+    print(
+        f"Animator: {animator}"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    # ========================================================
+    # WORK LOOKUP
+    # ========================================================
 
     try:
 
@@ -740,35 +1087,71 @@ async def work(
 
     except Exception as e:
 
-        print(f"WORK ERROR: {e!r}")
+        print(
+            f"WORK ERROR: {e!r}"
+        )
 
         await interaction.followup.send(
             "❌ Work lookup encountered an error.\n"
             f"`{type(e).__name__}: {e}`"
         )
+
         return
 
-    if not isinstance(works, dict):
+    # ========================================================
+    # SAFETY CHECK
+    # ========================================================
+
+    if not isinstance(
+        works,
+        dict,
+    ):
+
+        print(
+            "WORK ERROR: get_animator_works "
+            "returned invalid data."
+        )
 
         await interaction.followup.send(
             "❌ Work lookup returned invalid data."
         )
+
         return
 
+    # ========================================================
+    # GROUPS
+    # ========================================================
+
     groups = normalize_work_groups(
-        works.get("groups", {})
+        works.get(
+            "groups",
+            {},
+        )
     )
+
+    # ========================================================
+    # NO WORK
+    # ========================================================
 
     if not groups:
 
         anime_title = (
-            works.get("anime")
+            works.get(
+                "anime"
+            )
             or anime
+        )
+
+        display_name = (
+            works.get(
+                "name"
+            )
+            or animator
         )
 
         embed = discord.Embed(
             title=(
-                f"{works.get('name') or animator} — "
+                f"{display_name} — "
                 f"{anime_title}"
             ),
             description=(
@@ -785,17 +1168,30 @@ async def work(
         await interaction.followup.send(
             embed=embed
         )
+
         return
 
+    # ========================================================
+    # DISPLAY NAME
+    # ========================================================
+
     display_name = (
-        works.get("name")
+        works.get(
+            "name"
+        )
         or animator
     )
 
     anime_title = (
-        works.get("anime")
+        works.get(
+            "anime"
+        )
         or anime
     )
+
+    # ========================================================
+    # EMBED
+    # ========================================================
 
     embed = discord.Embed(
         title=(
@@ -809,11 +1205,18 @@ async def work(
     # MAIN STAFF
     # ========================================================
 
-    if groups.get("Main Animator"):
+    main_staff = groups.get(
+        "Main Animator"
+    )
+
+    if main_staff:
 
         embed.add_field(
             name="📌 MAIN STAFF",
-            value="**Main Animator:** Overview",
+            value=(
+                "**Main Animator:** "
+                "Overview"
+            ),
             inline=False,
         )
 
@@ -822,115 +1225,123 @@ async def work(
     # ========================================================
 
     key_animation = groups.get(
-        "Key Animation"
+        "Key Animation",
+        [],
     )
 
-    if isinstance(
-        key_animation,
-        dict,
-    ):
+    if key_animation:
 
-        key_episodes = key_animation.get(
-            "episodes",
-            [],
+        episode_text = format_work_episodes(
+            key_animation
         )
 
-    elif isinstance(
-        key_animation,
-        list,
-    ):
+        if episode_text:
 
-        key_episodes = key_animation
+            embed.add_field(
+                name="🔥 KEY ANIMATION",
+                value=(
+                    "**Key Animation**\n"
+                    f"KA: {episode_text}"
+                ),
+                inline=False,
+            )
 
-    else:
+    # ========================================================
+    # STORYBOARD
+    # ========================================================
 
-        key_episodes = []
-
-    key_text = format_work_episodes(
-        key_episodes
+    storyboard = groups.get(
+        "Storyboard",
+        [],
     )
 
-    if key_text:
+    if storyboard:
 
-        embed.add_field(
-            name="🔥 KEY ANIMATION",
-            value=(
-                "**Key Animation**\n"
-                f"KA: {key_text}"
-            ),
-            inline=False,
+        episode_text = format_work_episodes(
+            storyboard
         )
+
+        if episode_text:
+
+            embed.add_field(
+                name="🎬 STORYBOARD",
+                value=(
+                    "**Storyboard**\n"
+                    f"SB: {episode_text}"
+                ),
+                inline=False,
+            )
 
     # ========================================================
     # OTHER STAFF
     #
-    # KA is deliberately excluded.
-    #
-    # So:
-    #
-    # 🔥 KEY ANIMATION
-    # Key Animation
-    # KA: #17
-    #
-    # 🎬 OTHER STAFF
-    # **Storyboard**
-    # SB: #17, 17 (BD)
-    #
+    # KA and SB are intentionally NOT here.
     # ========================================================
+
+    OTHER_STAFF_ROLES = [
+
+        "Episode Director",
+
+        "Animation Director",
+
+        "Assistant Animation Director",
+
+        "Chief Animation Director",
+
+        "2nd Key Animation",
+
+        "Character Design",
+
+        "Art Director",
+
+        "Art Board",
+
+        "Storyboard / Episode Director",
+
+    ]
 
     other_fields = []
 
-    excluded_roles = {
-        "Main Animator",
-        "Key Animation",
-    }
+    for role in OTHER_STAFF_ROLES:
 
-    for role, info in groups.items():
+        info = groups.get(
+            role
+        )
 
-        if role in excluded_roles:
+        if not info:
             continue
 
         # ----------------------------------------------------
-        # Handle BOTH:
-        #
-        # list
-        # dict
+        # List format
         # ----------------------------------------------------
 
-        if isinstance(info, list):
+        if isinstance(
+            info,
+            list,
+        ):
 
             episodes = info
 
-            role_short = ROLE_SHORT_NAMES.get(
-                role,
-                role,
-            )
+        # ----------------------------------------------------
+        # Dict format
+        # ----------------------------------------------------
 
-        elif isinstance(info, dict):
+        elif isinstance(
+            info,
+            dict,
+        ):
 
             episodes = info.get(
                 "episodes",
                 [],
             )
 
-            role_short = info.get(
-                "short",
-                ROLE_SHORT_NAMES.get(
-                    role,
-                    role,
-                ),
-            )
-
         else:
 
             continue
 
-        if not isinstance(
-            episodes,
-            list,
-        ):
-
-            episodes = [episodes]
+        if not episodes:
+            continue
 
         episode_text = format_work_episodes(
             episodes
@@ -939,15 +1350,22 @@ async def work(
         if not episode_text:
             continue
 
+        role_short = ROLE_SHORT_NAMES.get(
+            role,
+            role,
+        )
+
+        field_text = (
+            f"**{role}**\n"
+            f"{role_short}: {episode_text}"
+        )
+
         other_fields.append(
-            (
-                f"**{role}**\n"
-                f"{role_short}: {episode_text}"
-            )
+            field_text
         )
 
     # ========================================================
-    # OTHER STAFF EMBED
+    # ADD OTHER STAFF
     # ========================================================
 
     if other_fields:
@@ -976,11 +1394,14 @@ async def work(
             else:
 
                 if current:
+
                     current += (
                         "\n\n"
                         + field_text
                     )
+
                 else:
+
                     current = field_text
 
         if current:
@@ -1016,7 +1437,8 @@ async def work(
         )
 
         await interaction.followup.send(
-            "❌ The work list was too large."
+            "❌ The work list was too large "
+            "to display in the embed."
         )
 
 
@@ -1031,11 +1453,26 @@ async def on_app_command_error(
 ):
 
     print()
-    print("=" * 60)
-    print("SLASH COMMAND ERROR")
-    print("=" * 60)
-    print(repr(error))
-    print("=" * 60)
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        "SLASH COMMAND ERROR"
+    )
+
+    print(
+        "=" * 60
+    )
+
+    print(
+        repr(error)
+    )
+
+    print(
+        "=" * 60
+    )
 
     message = (
         "❌ Something went wrong while running "
@@ -1067,4 +1504,6 @@ async def on_app_command_error(
 # RUN
 # ============================================================
 
-bot.run(TOKEN)
+bot.run(
+    TOKEN
+)
