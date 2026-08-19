@@ -59,6 +59,19 @@ EMBED_COLOR = discord.Color.from_rgb(
     255
 )
 
+ROLE_SHORT_NAMES = {
+    "Main Animator": "MA",
+    "Key Animation": "KA",
+    "Animation Director": "AD",
+    "Assistant Animation Director": "Ass. AD",
+    "Chief Animation Director": "CAD",
+    "Storyboard": "SB",
+    "Episode Director": "ED",
+    "Storyboard / Episode Director": "SB/ED",
+    "Character Design": "CD",
+    "Art Board": "AB",
+    "2nd Key Animation": "2KA",
+}
 
 # ============================================================
 # SEASON DETECTION
@@ -995,46 +1008,74 @@ async def work(
         )
 
     # ========================================================
-    # OTHER STAFF
-    # ========================================================
+# OTHER STAFF
+# ========================================================
 
-    other_fields = []
+other_fields = []
 
-    for role, info in groups.items():
+for role, info in groups.items():
 
-        # Already displayed
-        if role in (
-            "Main Animator",
-            "Key Animation"
-        ):
+    # Already displayed
+    if role in (
+        "Main Animator",
+        "Key Animation"
+    ):
+        continue
 
-            continue
+    # ----------------------------------------------------
+    # work_scraper may return either:
+    #
+    # "Storyboard": [17]
+    #
+    # OR:
+    #
+    # "Storyboard": {
+    #     "episodes": [17],
+    #     "short": "SB"
+    # }
+    # ----------------------------------------------------
+
+    if isinstance(info, list):
+
+        episodes = info
+        role_short = ROLE_SHORT_NAMES.get(
+            role,
+            role
+        )
+
+    elif isinstance(info, dict):
 
         episodes = info.get(
             "episodes",
             []
         )
 
-        if not episodes:
-            continue
-
         role_short = info.get(
             "short",
-            role
+            ROLE_SHORT_NAMES.get(
+                role,
+                role
+            )
         )
 
-        episode_text = format_work_episodes(
-            episodes
-        )
+    else:
+        continue
 
-        field_text = (
-            f"**{role}**\n"
-            f"{role_short}: {episode_text}"
-        )
+    if not episodes:
+        continue
 
-        other_fields.append(
-            field_text
-        )
+    episode_text = format_work_episodes(
+        episodes
+    )
+
+    field_text = (
+        f"**{role}**\n"
+        f"{role_short}: {episode_text}"
+    )
+
+    other_fields.append(
+        field_text
+    )
 
     # ========================================================
     # ADD OTHER STAFF
