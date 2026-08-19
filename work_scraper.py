@@ -33,11 +33,8 @@ ROLE_NAMES = {
 # ============================================================
 
 NAME_ALIASES = {
-    # Keiichirou Watanabe
+    # Common spelling variation
     "keiichiro watanabe": "keiichirou watanabe",
-    "keiichiro watanabe": "keiichirou watanabe",
-    "K1R0": "keiichirou watanabe",
-
 }
 
 
@@ -46,6 +43,7 @@ NAME_ALIASES = {
 # ============================================================
 
 def normalize(text):
+
     if not text:
         return ""
 
@@ -61,13 +59,12 @@ def normalize(text):
         text.split()
     )
 
-    # Resolve common name spelling variants
-    text = NAME_ALIASES.get(
+    return NAME_ALIASES.get(
         text,
         text
     )
 
-    return text
+
 # ============================================================
 # LOAD LOCAL JSON
 # ============================================================
@@ -117,17 +114,14 @@ def get_person_names(person):
 
     names = set()
 
-    for key in (
-        "en",
-        "ja"
-    ):
+    for key in ("en", "ja"):
 
         value = person.get(key)
 
-        if (
-            isinstance(value, str)
-            and value.strip()
-        ):
+        if isinstance(
+            value,
+            str
+        ) and value.strip():
 
             names.add(
                 normalize(value)
@@ -135,19 +129,19 @@ def get_person_names(person):
 
     pn = person.get("pn")
 
-    if isinstance(pn, dict):
+    if isinstance(
+        pn,
+        dict
+    ):
 
-        for key in (
-            "en",
-            "ja"
-        ):
+        for key in ("en", "ja"):
 
             value = pn.get(key)
 
-            if (
-                isinstance(value, str)
-                and value.strip()
-            ):
+            if isinstance(
+                value,
+                str
+            ) and value.strip():
 
                 names.add(
                     normalize(value)
@@ -164,14 +158,17 @@ def get_main_name(person):
 
     pn = person.get("pn")
 
-    if isinstance(pn, dict):
+    if isinstance(
+        pn,
+        dict
+    ):
 
         value = pn.get("en")
 
-        if (
-            isinstance(value, str)
-            and value.strip()
-        ):
+        if isinstance(
+            value,
+            str
+        ) and value.strip():
 
             return value.strip()
 
@@ -180,7 +177,11 @@ def get_main_name(person):
         ""
     )
 
-    if isinstance(value, str):
+    if isinstance(
+        value,
+        str
+    ):
+
         return value.strip()
 
     return ""
@@ -201,7 +202,10 @@ def find_person_id(
 
     def walk(obj):
 
-        if isinstance(obj, dict):
+        if isinstance(
+            obj,
+            dict
+        ):
 
             if target in get_person_names(obj):
 
@@ -222,7 +226,10 @@ def find_person_id(
                 if result:
                     return result
 
-        elif isinstance(obj, list):
+        elif isinstance(
+            obj,
+            list
+        ):
 
             for value in obj:
 
@@ -287,7 +294,133 @@ def extract_staff_list_data(
 
 
 # ============================================================
-# EPISODES
+# GET WORK LABEL
+# ============================================================
+
+def get_work_label(menu_name):
+
+    if not menu_name:
+        return ""
+
+    menu_name = str(
+        menu_name
+    ).strip()
+
+    # --------------------------------------------------------
+    # OP / ED
+    # --------------------------------------------------------
+
+    normalized = normalize(
+        menu_name
+    )
+
+    if re.fullmatch(
+        r"op\s*\d+",
+        normalized
+    ):
+
+        return menu_name
+
+    if re.fullmatch(
+        r"ed\s*\d+",
+        normalized
+    ):
+
+        return menu_name
+
+    # --------------------------------------------------------
+    # Normal episode
+    #
+    # IMPORTANT:
+    # Keep the ORIGINAL KFSL menu name.
+    #
+    # Examples:
+    #
+    # 17
+    # #17
+    # 17 (BD)
+    # #17 (BD)
+    # --------------------------------------------------------
+
+    return menu_name
+
+
+# ============================================================
+# GET WORK TYPE
+# ============================================================
+
+def get_work_type(menu_name):
+
+    normalized = normalize(
+        menu_name
+    )
+
+    if re.fullmatch(
+        r"op\s*\d+",
+        normalized
+    ):
+
+        return "OP"
+
+    if re.fullmatch(
+        r"ed\s*\d+",
+        normalized
+    ):
+
+        return "ED"
+
+    if re.search(
+        r"\d+",
+        normalized
+    ):
+
+        return "EPISODE"
+
+    return "OTHER"
+
+
+# ============================================================
+# GET EPISODE NUMBER
+# ============================================================
+
+def get_episode_number(menu_name):
+
+    if not menu_name:
+        return None
+
+    normalized = normalize(
+        menu_name
+    )
+
+    # OP / ED should not become episode 1
+    if re.fullmatch(
+        r"(op|ed)\s*\d+",
+        normalized
+    ):
+
+        return None
+
+    match = re.search(
+        r"#?\s*(\d+)",
+        str(menu_name)
+    )
+
+    if not match:
+        return None
+
+    try:
+
+        return int(
+            match.group(1)
+        )
+
+    except ValueError:
+
+        return None
+
+
+# ============================================================
+# EPISODES / WORKS
 # ============================================================
 
 def get_episode_data(data):
@@ -327,19 +460,10 @@ def get_episode_data(data):
                 "name",
                 ""
             )
-        )
+        ).strip()
 
-        match = re.search(
-            r"#?(\d+)",
-            menu_name
-        )
-
-        if not match:
+        if not menu_name:
             continue
-
-        episode_number = int(
-            match.group(1)
-        )
 
         credits = menu.get(
             "credits"
@@ -352,21 +476,84 @@ def get_episode_data(data):
 
             continue
 
+        work_type = get_work_type(
+            menu_name
+        )
+
+        if work_type == "OTHER":
+            continue
+
+        episode_number = get_episode_number(
+            menu_name
+        )
+
         episodes.append({
+
+            # Numeric episode if available
             "episode": episode_number,
+
+            # Original KFSL menu
             "name": menu_name,
-            "credits": credits
+
+            # Explicit work label
+            "work_name": get_work_label(
+                menu_name
+            ),
+
+            # OP / ED / EPISODE
+            "work_type": work_type,
+
+            # Credits
+            "credits": credits,
+
         })
 
+    # --------------------------------------------------------
+    # Sorting
+    # --------------------------------------------------------
+
+    def sort_key(item):
+
+        work_type = item.get(
+            "work_type"
+        )
+
+        episode = item.get(
+            "episode"
+        )
+
+        if work_type == "OP":
+            priority = 0
+
+        elif work_type == "EPISODE":
+            priority = 1
+
+        elif work_type == "ED":
+            priority = 2
+
+        else:
+            priority = 3
+
+        return (
+            priority,
+            episode
+            if episode is not None
+            else 9999,
+            item.get(
+                "work_name",
+                ""
+            )
+        )
+
     episodes.sort(
-        key=lambda x: x["episode"]
+        key=sort_key
     )
 
     return episodes
 
 
 # ============================================================
-# SEARCH ONE EPISODE
+# SEARCH ONE WORK
 # ============================================================
 
 def search_episode(
@@ -384,6 +571,13 @@ def search_episode(
         "credits",
         []
     )
+
+    if not isinstance(
+        credits,
+        list
+    ):
+
+        return results
 
     for credit_group in credits:
 
@@ -425,7 +619,7 @@ def search_episode(
             if not role_name:
                 continue
 
-            role_short = ROLE_NAMES.get(
+            display_role = ROLE_NAMES.get(
                 role_name,
                 role_name
             )
@@ -479,15 +673,41 @@ def search_episode(
                 displayed_name = displayed_name.strip()
 
                 results.append({
+
                     "name": displayed_name,
-                    "main_name": get_main_name(person),
-                    "id": person.get("id"),
 
-                    # Full role name
-                    "role": role_name,
+                    "main_name": get_main_name(
+                        person
+                    ),
 
-                    # Short role name
-                    "role_short": role_short
+                    "id": person.get(
+                        "id"
+                    ),
+
+                    "role": display_role,
+
+                    # ----------------------------------------
+                    # IMPORTANT:
+                    # Preserve original KFSL work.
+                    # ----------------------------------------
+
+                    "episode": episode.get(
+                        "episode"
+                    ),
+
+                    "work_name": episode.get(
+                        "work_name",
+                        episode.get(
+                            "name",
+                            ""
+                        )
+                    ),
+
+                    "work_type": episode.get(
+                        "work_type",
+                        "EPISODE"
+                    ),
+
                 })
 
     return results
@@ -520,14 +740,44 @@ def search_local_json(
         for match in matches:
 
             results.append({
+
                 "anime": anime_title,
+
                 "slug": slug,
-                "episode": episode["episode"],
-                "role": match["role"],
-                "role_short": match["role_short"],
-                "name": match["name"],
-                "main_name": match["main_name"],
-                "id": match["id"]
+
+                "episode": match.get(
+                    "episode"
+                ),
+
+                "work_name": match.get(
+                    "work_name",
+                    ""
+                ),
+
+                "work_type": match.get(
+                    "work_type",
+                    "EPISODE"
+                ),
+
+                "role": match.get(
+                    "role",
+                    ""
+                ),
+
+                "name": match.get(
+                    "name",
+                    ""
+                ),
+
+                "main_name": match.get(
+                    "main_name",
+                    ""
+                ),
+
+                "id": match.get(
+                    "id"
+                ),
+
             })
 
     return results
@@ -559,6 +809,7 @@ async def get_anime_page(
             )
 
             if response.status != 200:
+
                 return None
 
             return await response.text()
@@ -573,7 +824,7 @@ async def get_anime_page(
 
 
 # ============================================================
-# STAFF PROFILE
+# GET STAFF PROFILE
 # ============================================================
 
 async def get_staff_profile(
@@ -582,8 +833,11 @@ async def get_staff_profile(
 ):
 
     possible_urls = [
-        f"{BASE_URL}/{person_id}",
-        f"{BASE_URL}?id={person_id}",
+
+        f"https://keyframe-staff-list.com/staff/{person_id}",
+
+        f"https://keyframe-staff-list.com/staff?id={person_id}",
+
     ]
 
     for url in possible_urls:
@@ -599,12 +853,24 @@ async def get_staff_profile(
 
                 text = await response.text()
 
-                # We don't need clickable profile URLs
-                # for /work.
+                # --------------------------------------------
+                # We no longer depend on profile links.
                 #
-                # This function is kept only for compatibility.
+                # The bot displays work numbers directly.
+                # --------------------------------------------
 
-                return None
+                match = re.search(
+                    r'href=["\'](/staff/[a-f0-9]{40,})',
+                    text,
+                    re.IGNORECASE
+                )
+
+                if match:
+
+                    return (
+                        "https://keyframe-staff-list.com"
+                        + match.group(1)
+                    )
 
         except Exception:
             continue
@@ -616,38 +882,59 @@ async def get_staff_profile(
 # BUILD GROUPED WORKS
 # ============================================================
 
-def build_grouped_works(results):
+def build_grouped_works(
+    results
+):
 
     grouped = {}
 
     for result in results:
 
-        role = result["role"]
-
-        role_short = result.get(
-            "role_short",
-            role
+        role = result.get(
+            "role",
+            ""
         )
 
-        episode = result["episode"]
+        if not role:
+            continue
 
-        if role not in grouped:
+        grouped.setdefault(
+            role,
+            []
+        )
 
-            grouped[role] = {
-                "short": role_short,
-                "episodes": []
-            }
+        # ----------------------------------------------------
+        # ALWAYS use the original KFSL work label.
+        # ----------------------------------------------------
 
-        if episode not in grouped[role]["episodes"]:
+        work_name = str(
+            result.get(
+                "work_name",
+                ""
+            )
+        ).strip()
 
-            grouped[role]["episodes"].append(
-                episode
+        if not work_name:
+
+            episode = result.get(
+                "episode"
             )
 
-    # Sort episodes
-    for role in grouped:
+            if episode is not None:
 
-        grouped[role]["episodes"].sort()
+                work_name = (
+                    f"#{episode:02d}"
+                )
+
+            else:
+
+                continue
+
+        if work_name not in grouped[role]:
+
+            grouped[role].append(
+                work_name
+            )
 
     return grouped
 
@@ -670,7 +957,7 @@ async def get_animator_works(
         ).title()
 
     # --------------------------------------------------------
-    # LOCAL JSON FIRST
+    # LOCAL JSON
     # --------------------------------------------------------
 
     data = load_local_json(
@@ -689,26 +976,81 @@ async def get_animator_works(
         if not results:
 
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
-                "groups": {}
+
+                "groups": {},
+
             }
+
+        person_id = results[0].get(
+            "id"
+        )
+
+        headers = {
+
+            "User-Agent": (
+                "Mozilla/5.0 "
+                "(Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/605.1.15 "
+                "(KHTML, like Gecko) "
+                "Version/26.0 Safari/605.1.15"
+            ),
+
+            "Accept": (
+                "text/html,application/xhtml+xml,"
+                "application/xml;q=0.9,*/*;q=0.8"
+            ),
+
+            "Accept-Language": (
+                "en-US,en;q=0.9"
+            ),
+
+        }
+
+        timeout = aiohttp.ClientTimeout(
+            total=30
+        )
+
+        async with aiohttp.ClientSession(
+            headers=headers,
+            timeout=timeout
+        ) as session:
+
+            profile_url = None
+
+            if person_id:
+
+                profile_url = await get_staff_profile(
+                    session,
+                    person_id
+                )
 
         grouped = build_grouped_works(
             results
         )
 
         return {
+
             "name": (
                 results[0]["name"]
                 or animator
             ),
+
             "anime": anime_title,
+
             "slug": anime_slug,
-            "profile_url": None,
-            "groups": grouped
+
+            "profile_url": profile_url,
+
+            "groups": grouped,
+
         }
 
     # --------------------------------------------------------
@@ -716,20 +1058,15 @@ async def get_animator_works(
     # --------------------------------------------------------
 
     headers = {
+
         "User-Agent": (
             "Mozilla/5.0 "
             "(Macintosh; Intel Mac OS X 10_15_7) "
             "AppleWebKit/605.1.15 "
             "(KHTML, like Gecko) "
             "Version/26.0 Safari/605.1.15"
-        ),
-        "Accept": (
-            "text/html,application/xhtml+xml,"
-            "application/xml;q=0.9,*/*;q=0.8"
-        ),
-        "Accept-Language": (
-            "en-US,en;q=0.9"
         )
+
     }
 
     timeout = aiohttp.ClientTimeout(
@@ -749,11 +1086,17 @@ async def get_animator_works(
         if not page:
 
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
-                "groups": {}
+
+                "groups": {},
+
             }
 
         data = extract_staff_list_data(
@@ -763,11 +1106,17 @@ async def get_animator_works(
         if not data:
 
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
-                "groups": {}
+
+                "groups": {},
+
             }
 
         results = search_local_json(
@@ -781,16 +1130,37 @@ async def get_animator_works(
             results
         )
 
+        person_id = (
+            results[0]["id"]
+            if results
+            else None
+        )
+
+        profile_url = None
+
+        if person_id:
+
+            profile_url = await get_staff_profile(
+                session,
+                person_id
+            )
+
         return {
+
             "name": (
                 results[0]["name"]
                 if results
                 else animator
             ),
+
             "anime": anime_title,
+
             "slug": anime_slug,
-            "profile_url": None,
-            "groups": grouped
+
+            "profile_url": profile_url,
+
+            "groups": grouped,
+
         }
 
 
@@ -800,7 +1170,7 @@ async def get_animator_works(
 
 async def test():
 
-    animator = "Keiichirou Watanabe"
+    animator = "Keiichiro Watanabe"
 
     slug = "jujutsu-kaisen-2nd-season"
 
@@ -825,24 +1195,34 @@ async def test():
         f"Anime: {works['anime']}"
     )
 
+    print(
+        f"Profile: {works['profile_url']}"
+    )
+
     print()
 
-    for role, info in works["groups"].items():
-
-        print(role)
+    for role, works_list in works[
+        "groups"
+    ].items():
 
         print(
-            f"{info['short']}: "
+            f"{role}: "
             + ", ".join(
-                f"#{episode:02d}"
-                for episode in info["episodes"]
+                str(work)
+                for work in works_list
             )
         )
 
-        print()
-
+    print()
     print("=" * 70)
 
 
+# ============================================================
+# RUN TEST
+# ============================================================
+
 if __name__ == "__main__":
-    asyncio.run(test())
+
+    asyncio.run(
+        test()
+    )
