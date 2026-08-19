@@ -427,32 +427,39 @@ def get_episode_data(data):
 
     episodes = []
 
-    if not isinstance(
-        data,
-        dict
-    ):
+    # --------------------------------------------------------
+    # KFSL JSON can be:
+    #
+    # {
+    #     "menus": [...]
+    # }
+    #
+    # OR directly:
+    #
+    # [...]
+    # --------------------------------------------------------
+
+    if isinstance(data, dict):
+
+        menus = data.get(
+            "menus",
+            []
+        )
+
+    elif isinstance(data, list):
+
+        menus = data
+
+    else:
 
         return episodes
 
-    menus = data.get(
-        "menus",
-        []
-    )
-
-    if not isinstance(
-        menus,
-        list
-    ):
-
+    if not isinstance(menus, list):
         return episodes
 
     for menu in menus:
 
-        if not isinstance(
-            menu,
-            dict
-        ):
-
+        if not isinstance(menu, dict):
             continue
 
         menu_name = str(
@@ -466,14 +473,14 @@ def get_episode_data(data):
             continue
 
         credits = menu.get(
-            "credits"
+            "credits",
+            []
         )
 
         if not isinstance(
             credits,
             list
         ):
-
             continue
 
         work_type = get_work_type(
@@ -488,25 +495,61 @@ def get_episode_data(data):
         )
 
         episodes.append({
-
-            # Numeric episode if available
             "episode": episode_number,
 
-            # Original KFSL menu
+            # IMPORTANT:
+            # Keep exact KFSL label.
             "name": menu_name,
 
-            # Explicit work label
             "work_name": get_work_label(
                 menu_name
             ),
 
-            # OP / ED / EPISODE
             "work_type": work_type,
 
-            # Credits
             "credits": credits,
-
         })
+
+    # --------------------------------------------------------
+    # SORT
+    # --------------------------------------------------------
+
+    def sort_key(item):
+
+        work_type = item.get(
+            "work_type"
+        )
+
+        episode = item.get(
+            "episode"
+        )
+
+        if work_type == "OP":
+            priority = 0
+
+        elif work_type == "EPISODE":
+            priority = 1
+
+        elif work_type == "ED":
+            priority = 2
+
+        else:
+            priority = 3
+
+        return (
+            priority,
+            episode if episode is not None else 9999,
+            item.get(
+                "work_name",
+                ""
+            ),
+        )
+
+    episodes.sort(
+        key=sort_key
+    )
+
+    return episodes
 
     # --------------------------------------------------------
     # Sorting
