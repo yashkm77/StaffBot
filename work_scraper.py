@@ -3,9 +3,11 @@ import asyncio
 import json
 import re
 import html as html_module
+import os
 
 
 BASE_URL = "https://keyframe-staff-list.com/staff"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # ============================================================
@@ -21,13 +23,13 @@ ROLE_NAMES = {
     "Storyboard": "SB",
     "Episode Director": "ED",
     "Storyboard / Episode Director": "SB/ED",
-
     "Art Board": "Art Board",
+    "Main Animator": "Main Animator",
 }
 
 
 # ============================================================
-# NORMALIZE NAME
+# NORMALIZE
 # ============================================================
 
 def normalize(text):
@@ -49,10 +51,180 @@ def normalize(text):
 
 
 # ============================================================
-# EXTRACT KEYFRAME STAFF JSON
+# LOAD LOCAL JSON
 # ============================================================
 
-def extract_staff_list_data(page_html):
+def load_local_json(slug):
+
+    path = os.path.join(
+        BASE_DIR,
+        f"{slug}.json"
+    )
+
+    if not os.path.exists(path):
+        return None
+
+    print(
+        f"Local JSON found for {slug}"
+    )
+
+    print(
+        f"Using local JSON: {slug}.json"
+    )
+
+    try:
+
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
+            return json.load(f)
+
+    except Exception as e:
+
+        print(
+            f"JSON error: {e}"
+        )
+
+        return None
+
+
+# ============================================================
+# PERSON NAMES
+# ============================================================
+
+def get_person_names(person):
+
+    names = set()
+
+    for key in (
+        "en",
+        "ja"
+    ):
+
+        value = person.get(key)
+
+        if (
+            isinstance(value, str)
+            and value.strip()
+        ):
+
+            names.add(
+                normalize(value)
+            )
+
+    pn = person.get("pn")
+
+    if isinstance(pn, dict):
+
+        for key in (
+            "en",
+            "ja"
+        ):
+
+            value = pn.get(key)
+
+            if (
+                isinstance(value, str)
+                and value.strip()
+            ):
+
+                names.add(
+                    normalize(value)
+                )
+
+    return names
+
+
+# ============================================================
+# MAIN / PEN NAME
+# ============================================================
+
+def get_main_name(person):
+
+    pn = person.get("pn")
+
+    if isinstance(pn, dict):
+
+        value = pn.get("en")
+
+        if (
+            isinstance(value, str)
+            and value.strip()
+        ):
+
+            return value.strip()
+
+    value = person.get(
+        "en",
+        ""
+    )
+
+    if isinstance(value, str):
+        return value.strip()
+
+    return ""
+
+
+# ============================================================
+# FIND PERSON ID
+# ============================================================
+
+def find_person_id(
+    data,
+    animator
+):
+
+    target = normalize(
+        animator
+    )
+
+    def walk(obj):
+
+        if isinstance(obj, dict):
+
+            if target in get_person_names(obj):
+
+                person_id = obj.get(
+                    "id"
+                )
+
+                if person_id is not None:
+
+                    return str(
+                        person_id
+                    )
+
+            for value in obj.values():
+
+                result = walk(value)
+
+                if result:
+                    return result
+
+        elif isinstance(obj, list):
+
+            for value in obj:
+
+                result = walk(value)
+
+                if result:
+                    return result
+
+        return None
+
+    return walk(data)
+
+
+# ============================================================
+# EXTRACT STAFF LIST DATA
+# ============================================================
+
+def extract_staff_list_data(
+    page_html
+):
 
     pattern = re.compile(
         r'<script[^>]+id=["\']staffListData["\'][^>]*>'
@@ -61,7 +233,9 @@ def extract_staff_list_data(page_html):
         re.DOTALL | re.IGNORECASE
     )
 
-    match = pattern.search(page_html)
+    match = pattern.search(
+        page_html
+    )
 
     if not match:
 
@@ -71,7 +245,9 @@ def extract_staff_list_data(page_html):
 
         return None
 
-    raw_json = match.group(1).strip()
+    raw_json = match.group(
+        1
+    ).strip()
 
     raw_json = html_module.unescape(
         raw_json
@@ -93,136 +269,82 @@ def extract_staff_list_data(page_html):
 
 
 # ============================================================
-# GET ALL POSSIBLE NAMES FOR A PERSON
-#
-# This supports:
-#
-# - English name
-# - Japanese name
-# - Pen name
-# - Main name
-# - Real name
-# - Alternate name
+# EPISODES
 # ============================================================
 
-def get_person_names(person):
+def get_episode_data(data):
 
-    names = set()
+    episodes = []
 
-    # English name
-    en_name = person.get("en")
-
-    if en_name:
-
-        names.add(
-            normalize(en_name)
-        )
-
-    # Japanese name
-    ja_name = person.get("ja")
-
-    if ja_name:
-
-        names.add(
-            normalize(ja_name)
-        )
-
-    # Pen name object
-    pn = person.get("pn")
-
-    if isinstance(pn, dict):
-
-        pn_en = pn.get("en")
-
-        if pn_en:
-
-            names.add(
-                normalize(pn_en)
-            )
-
-        pn_ja = pn.get("ja")
-
-        if pn_ja:
-
-            names.add(
-                normalize(pn_ja)
-            )
-
-    # Other possible main/real name fields
-    for key in (
-        "main",
-        "mainName",
-        "main_name",
-        "realName",
-        "real_name",
-        "alternate",
-        "alternative"
+    if not isinstance(
+        data,
+        dict
     ):
 
-        value = person.get(key)
+        return episodes
 
-        if isinstance(value, str):
-
-            if value.strip():
-
-                names.add(
-                    normalize(value)
-                )
-
-        elif isinstance(value, dict):
-
-            for subvalue in value.values():
-
-                if isinstance(
-                    subvalue,
-                    str
-                ):
-
-                    names.add(
-                        normalize(subvalue)
-                    )
-
-    return names
-
-
-# ============================================================
-# GET MAIN / PEN NAME
-# ============================================================
-
-def get_main_name(person):
-
-    pn = person.get("pn")
-
-    if isinstance(pn, dict):
-
-        pn_en = pn.get("en")
-
-        if pn_en:
-
-            return pn_en.strip()
-
-    for key in (
-        "main",
-        "mainName",
-        "main_name",
-        "realName",
-        "real_name"
-    ):
-
-        value = person.get(key)
-
-        if isinstance(value, str):
-
-            if value.strip():
-
-                return value.strip()
-
-    return (
-        person.get(
-            "en",
-            ""
-        ).strip()
+    menus = data.get(
+        "menus",
+        []
     )
+
+    if not isinstance(
+        menus,
+        list
+    ):
+
+        return episodes
+
+    for menu in menus:
+
+        if not isinstance(
+            menu,
+            dict
+        ):
+
+            continue
+
+        menu_name = str(
+            menu.get(
+                "name",
+                ""
+            )
+        )
+
+        match = re.search(
+            r"#?(\d+)",
+            menu_name
+        )
+
+        if not match:
+            continue
+
+        episode_number = int(
+            match.group(1)
+        )
+
+        credits = menu.get(
+            "credits"
+        )
+
+        if not isinstance(
+            credits,
+            list
+        ):
+
+            continue
+
+        episodes.append({
+            "episode": episode_number,
+            "name": menu_name,
+            "credits": credits
+        })
+
+    episodes.sort(
+        key=lambda x: x["episode"]
+    )
+
+    return episodes
 
 
 # ============================================================
@@ -251,6 +373,7 @@ def search_episode(
             credit_group,
             dict
         ):
+
             continue
 
         roles = credit_group.get(
@@ -262,6 +385,7 @@ def search_episode(
             roles,
             list
         ):
+
             continue
 
         for role in roles:
@@ -270,6 +394,7 @@ def search_episode(
                 role,
                 dict
             ):
+
                 continue
 
             role_name = str(
@@ -280,10 +405,9 @@ def search_episode(
             ).strip()
 
             if not role_name:
-
                 continue
 
-            display_role = ROLE_NAMES.get(
+            role_short = ROLE_NAMES.get(
                 role_name,
                 role_name
             )
@@ -297,6 +421,7 @@ def search_episode(
                 staff,
                 list
             ):
+
                 continue
 
             for person in staff:
@@ -305,21 +430,18 @@ def search_episode(
                     person,
                     dict
                 ):
+
                     continue
 
                 if person.get(
                     "isStudio"
                 ):
+
                     continue
 
                 names = get_person_names(
                     person
                 )
-
-                # ------------------------------------------------
-                # IMPORTANT:
-                # Match both displayed and main/pen names.
-                # ------------------------------------------------
 
                 if target not in names:
                     continue
@@ -333,132 +455,68 @@ def search_episode(
                     displayed_name,
                     str
                 ):
+
                     displayed_name = ""
 
-                displayed_name = (
-                    displayed_name.strip()
-                )
-
-                main_name = get_main_name(
-                    person
-                )
+                displayed_name = displayed_name.strip()
 
                 results.append({
+                    "name": displayed_name,
+                    "main_name": get_main_name(person),
+                    "id": person.get("id"),
 
-                    "name":
-                        displayed_name,
+                    # Full role name
+                    "role": role_name,
 
-                    "main_name":
-                        main_name,
-
-                    "id":
-                        person.get(
-                            "id"
-                        ),
-
-                    "role":
-                        display_role
-
+                    # Short role name
+                    "role_short": role_short
                 })
 
     return results
 
 
 # ============================================================
-# GET EPISODES FROM KEYFRAME PAGE
+# SEARCH LOCAL JSON
 # ============================================================
 
-def get_episode_data(data):
+def search_local_json(
+    data,
+    anime_title,
+    slug,
+    animator
+):
 
-    episodes = []
+    results = []
 
-    if not isinstance(
-        data,
-        dict
-    ):
-        return episodes
-
-    menus = data.get(
-        "menus",
-        []
+    episodes = get_episode_data(
+        data
     )
 
-    if not isinstance(
-        menus,
-        list
-    ):
-        return episodes
+    for episode in episodes:
 
-    for menu in menus:
-
-        if not isinstance(
-            menu,
-            dict
-        ):
-            continue
-
-        menu_name = str(
-            menu.get(
-                "name",
-                ""
-            )
+        matches = search_episode(
+            episode,
+            animator
         )
 
-        # ----------------------------------------------------
-        # Extract episode number
-        #
-        # Examples:
-        # #01
-        # #1
-        # Episode 01
-        # ----------------------------------------------------
+        for match in matches:
 
-        match = re.search(
-            r"#?(\d+)",
-            menu_name
-        )
+            results.append({
+                "anime": anime_title,
+                "slug": slug,
+                "episode": episode["episode"],
+                "role": match["role"],
+                "role_short": match["role_short"],
+                "name": match["name"],
+                "main_name": match["main_name"],
+                "id": match["id"]
+            })
 
-        if not match:
-            continue
-
-        episode_number = int(
-            match.group(1)
-        )
-
-        credits = menu.get(
-            "credits"
-        )
-
-        if not isinstance(
-            credits,
-            list
-        ):
-            continue
-
-        episodes.append({
-
-            "episode":
-                episode_number,
-
-            "name":
-                menu_name,
-
-            "credits":
-                credits
-
-        })
-
-    # Newest episode first
-    episodes.sort(
-        key=lambda x: x["episode"],
-        reverse=True
-    )
-
-    return episodes
+    return results
 
 
 # ============================================================
-# DOWNLOAD ANIME PAGE
+# GET ANIME PAGE
 # ============================================================
 
 async def get_anime_page(
@@ -466,9 +524,7 @@ async def get_anime_page(
     slug
 ):
 
-    url = (
-        f"{BASE_URL}/{slug}"
-    )
+    url = f"{BASE_URL}/{slug}"
 
     print(
         f"Opening: {url}"
@@ -485,7 +541,6 @@ async def get_anime_page(
             )
 
             if response.status != 200:
-
                 return None
 
             return await response.text()
@@ -500,90 +555,87 @@ async def get_anime_page(
 
 
 # ============================================================
-# SEARCH ANIME FOR ANIMATOR
+# STAFF PROFILE
 # ============================================================
 
-async def search_anime(
+async def get_staff_profile(
     session,
-    slug,
-    anime_title,
-    animator
+    person_id
 ):
 
-    page = await get_anime_page(
-        session,
-        slug
-    )
+    possible_urls = [
+        f"{BASE_URL}/{person_id}",
+        f"{BASE_URL}?id={person_id}",
+    ]
 
-    if not page:
+    for url in possible_urls:
 
-        return []
+        try:
 
-    print(
-        f"HTML length: {len(page)}"
-    )
+            async with session.get(
+                url
+            ) as response:
 
-    data = extract_staff_list_data(
-        page
-    )
+                if response.status != 200:
+                    continue
 
-    if not data:
+                text = await response.text()
 
-        return []
+                # We don't need clickable profile URLs
+                # for /work.
+                #
+                # This function is kept only for compatibility.
 
-    print(
-        f"Page title: {data.get('title')}"
-    )
+                return None
 
-    episodes = get_episode_data(
-        data
-    )
+        except Exception:
+            continue
 
-    print(
-        f"Episodes found: {len(episodes)}"
-    )
-
-    results = []
-
-    for episode in episodes:
-
-        matches = search_episode(
-            episode,
-            animator
-        )
-
-        for match in matches:
-
-            results.append({
-
-                "anime":
-                    anime_title,
-
-                "slug":
-                    slug,
-
-                "episode":
-                    episode["episode"],
-
-                "role":
-                    match["role"],
-
-                "name":
-                    match["name"],
-
-                "main_name":
-                    match["main_name"],
-
-                "id":
-                    match["id"]
-
-            })
-
-    return results
+    return None
 
 
 # ============================================================
-# PUBLIC FUNCTION USED BY MAIN.PY
+# BUILD GROUPED WORKS
+# ============================================================
+
+def build_grouped_works(results):
+
+    grouped = {}
+
+    for result in results:
+
+        role = result["role"]
+
+        role_short = result.get(
+            "role_short",
+            role
+        )
+
+        episode = result["episode"]
+
+        if role not in grouped:
+
+            grouped[role] = {
+                "short": role_short,
+                "episodes": []
+            }
+
+        if episode not in grouped[role]["episodes"]:
+
+            grouped[role]["episodes"].append(
+                episode
+            )
+
+    # Sort episodes
+    for role in grouped:
+
+        grouped[role]["episodes"].sort()
+
+    return grouped
+
+
+# ============================================================
+# GET ANIMATOR WORKS
 # ============================================================
 
 async def get_animator_works(
@@ -599,26 +651,67 @@ async def get_animator_works(
             " "
         ).title()
 
+    # --------------------------------------------------------
+    # LOCAL JSON FIRST
+    # --------------------------------------------------------
+
+    data = load_local_json(
+        anime_slug
+    )
+
+    if data is not None:
+
+        results = search_local_json(
+            data,
+            anime_title,
+            anime_slug,
+            animator
+        )
+
+        if not results:
+
+            return {
+                "name": animator,
+                "anime": anime_title,
+                "slug": anime_slug,
+                "profile_url": None,
+                "groups": {}
+            }
+
+        grouped = build_grouped_works(
+            results
+        )
+
+        return {
+            "name": (
+                results[0]["name"]
+                or animator
+            ),
+            "anime": anime_title,
+            "slug": anime_slug,
+            "profile_url": None,
+            "groups": grouped
+        }
+
+    # --------------------------------------------------------
+    # NO LOCAL JSON
+    # --------------------------------------------------------
+
     headers = {
-
-        "User-Agent":
-            (
-                "Mozilla/5.0 "
-                "(Macintosh; Intel Mac OS X 10_15_7) "
-                "AppleWebKit/605.1.15 "
-                "(KHTML, like Gecko) "
-                "Version/26.0 Safari/605.1.15"
-            ),
-
-        "Accept":
-            (
-                "text/html,application/xhtml+xml,"
-                "application/xml;q=0.9,*/*;q=0.8"
-            ),
-
-        "Accept-Language":
+        "User-Agent": (
+            "Mozilla/5.0 "
+            "(Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/605.1.15 "
+            "(KHTML, like Gecko) "
+            "Version/26.0 Safari/605.1.15"
+        ),
+        "Accept": (
+            "text/html,application/xhtml+xml,"
+            "application/xml;q=0.9,*/*;q=0.8"
+        ),
+        "Accept-Language": (
             "en-US,en;q=0.9"
-
+        )
     }
 
     timeout = aiohttp.ClientTimeout(
@@ -630,14 +723,57 @@ async def get_animator_works(
         timeout=timeout
     ) as session:
 
-        results = await search_anime(
+        page = await get_anime_page(
             session,
-            anime_slug,
+            anime_slug
+        )
+
+        if not page:
+
+            return {
+                "name": animator,
+                "anime": anime_title,
+                "slug": anime_slug,
+                "profile_url": None,
+                "groups": {}
+            }
+
+        data = extract_staff_list_data(
+            page
+        )
+
+        if not data:
+
+            return {
+                "name": animator,
+                "anime": anime_title,
+                "slug": anime_slug,
+                "profile_url": None,
+                "groups": {}
+            }
+
+        results = search_local_json(
+            data,
             anime_title,
+            anime_slug,
             animator
         )
 
-    return results
+        grouped = build_grouped_works(
+            results
+        )
+
+        return {
+            "name": (
+                results[0]["name"]
+                if results
+                else animator
+            ),
+            "anime": anime_title,
+            "slug": anime_slug,
+            "profile_url": None,
+            "groups": grouped
+        }
 
 
 # ============================================================
@@ -646,99 +782,49 @@ async def get_animator_works(
 
 async def test():
 
-    animator = "Hachidai Takayama"
+    animator = "Keiichirou Watanabe"
 
-    slug = "my-hero-academia"
+    slug = "jujutsu-kaisen-2nd-season"
 
-    anime_title = "My Hero Academia"
-
-    print()
-
-    print(
-        "=" * 70
-    )
-
-    print(
-        f"Animator: {animator}"
-    )
-
-    print(
-        f"Anime: {anime_title}"
-    )
-
-    print(
-        f"Slug: {slug}"
-    )
-
-    print(
-        "=" * 70
-    )
+    anime_title = "Jujutsu Kaisen 2nd Season"
 
     print()
+    print("=" * 70)
 
-    results = await get_animator_works(
+    works = await get_animator_works(
         animator,
         slug,
         anime_title
     )
 
-    print()
+    print("=" * 70)
 
     print(
-        "=" * 70
+        f"Name: {works['name']}"
     )
 
     print(
-        f"FOUND {len(results)} CREDIT(S)"
-    )
-
-    print(
-        "=" * 70
+        f"Anime: {works['anime']}"
     )
 
     print()
 
-    if not results:
+    for role, info in works["groups"].items():
+
+        print(role)
 
         print(
-            "No credits found."
+            f"{info['short']}: "
+            + ", ".join(
+                f"#{episode:02d}"
+                for episode in info["episodes"]
+            )
         )
 
-        return
+        print()
 
-    for work in results:
+    print("=" * 70)
 
-        print(
-            f"Episode: #{work['episode']:02d}"
-        )
-
-        print(
-            f"Role: {work['role']}"
-        )
-
-        print(
-            f"Displayed name: {work['name']}"
-        )
-
-        print(
-            f"Main/Pen name: {work['main_name']}"
-        )
-
-        print(
-            f"ID: {work['id']}"
-        )
-
-        print(
-            "-" * 70
-        )
-
-
-# ============================================================
-# START SCRIPT
-# ============================================================
 
 if __name__ == "__main__":
-
-    asyncio.run(
-        test()
-    )
+    asyncio.run(test())
