@@ -29,11 +29,23 @@ ROLE_NAMES = {
 
 
 # ============================================================
+# NAME ALIASES
+# ============================================================
+
+NAME_ALIASES = {
+    # Keiichirou Watanabe
+    "keiichiro watanabe": "keiichirou watanabe",
+    "keiichiro watanabe": "keiichirou watanabe",
+    "K1R0": "keiichirou watanabe",
+
+}
+
+
+# ============================================================
 # NORMALIZE
 # ============================================================
 
 def normalize(text):
-
     if not text:
         return ""
 
@@ -45,11 +57,17 @@ def normalize(text):
         text
     )
 
-    return " ".join(
+    text = " ".join(
         text.split()
     )
 
+    # Resolve common name spelling variants
+    text = NAME_ALIASES.get(
+        text,
+        text
+    )
 
+    return text
 # ============================================================
 # LOAD LOCAL JSON
 # ============================================================
