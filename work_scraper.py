@@ -52,6 +52,7 @@ def normalize(text):
     Normalize names / role names / menu names.
 
     Examples:
+
         Keiichiro Watanabe
         -> keiichirou watanabe
 
@@ -70,7 +71,9 @@ def normalize(text):
         text,
     )
 
-    text = " ".join(text.split())
+    text = " ".join(
+        text.split()
+    )
 
     return NAME_ALIASES.get(
         text,
@@ -272,7 +275,6 @@ def find_person_id(
                 )
 
                 if result:
-
                     return result
 
         elif isinstance(
@@ -287,7 +289,6 @@ def find_person_id(
                 )
 
                 if result:
-
                     return result
 
         return None
@@ -423,7 +424,6 @@ def get_episode_number(menu_name):
         text
     )
 
-    # OP / ED are not episode numbers
     if re.fullmatch(
         r"op\s*(?:#\s*)?\d+",
         normalized,
@@ -522,18 +522,24 @@ def get_episode_data(data):
         )
 
         episodes.append({
+
             "episode": episode_number,
+
             "name": menu_name,
+
             "work_name": get_work_label(
                 menu_name
             ),
+
             "work_type": work_type,
+
             "credits": credits,
+
         })
 
-    # ========================================================
+    # --------------------------------------------------------
     # SORT
-    # ========================================================
+    # --------------------------------------------------------
 
     def sort_key(item):
 
@@ -596,7 +602,6 @@ def normalize_role_name(role_name):
         text
     )
 
-    # Key Animation
     if normalized in (
         "key animation",
         "key animator",
@@ -604,7 +609,6 @@ def normalize_role_name(role_name):
 
         return "Key Animation"
 
-    # 2nd Key Animation
     if normalized in (
         "2nd key animation",
         "second key animation",
@@ -614,7 +618,6 @@ def normalize_role_name(role_name):
 
         return "2nd Key Animation"
 
-    # Storyboard
     if normalized in (
         "storyboard",
         "story board",
@@ -622,7 +625,6 @@ def normalize_role_name(role_name):
 
         return "Storyboard"
 
-    # Episode Director
     if normalized in (
         "episode director",
         "episode director ed",
@@ -630,7 +632,6 @@ def normalize_role_name(role_name):
 
         return "Episode Director"
 
-    # Storyboard / Episode Director
     if normalized in (
         "storyboard episode director",
         "storyboard episode director ed",
@@ -639,7 +640,6 @@ def normalize_role_name(role_name):
 
         return "Storyboard / Episode Director"
 
-    # Animation Director
     if normalized in (
         "animation director",
         "animation director ad",
@@ -647,7 +647,6 @@ def normalize_role_name(role_name):
 
         return "Animation Director"
 
-    # Assistant Animation Director
     if normalized in (
         "assistant animation director",
         "assistant animation director aad",
@@ -656,7 +655,6 @@ def normalize_role_name(role_name):
 
         return "Assistant Animation Director"
 
-    # Chief Animation Director
     if normalized in (
         "chief animation director",
         "chief animation director cad",
@@ -664,7 +662,6 @@ def normalize_role_name(role_name):
 
         return "Chief Animation Director"
 
-    # Character Design
     if normalized in (
         "character design",
         "character designer",
@@ -672,7 +669,6 @@ def normalize_role_name(role_name):
 
         return "Character Design"
 
-    # Art Director
     if normalized in (
         "art director",
         "art director ad",
@@ -680,7 +676,6 @@ def normalize_role_name(role_name):
 
         return "Art Director"
 
-    # Art Board
     if normalized in (
         "art board",
         "artboard",
@@ -688,7 +683,6 @@ def normalize_role_name(role_name):
 
         return "Art Board"
 
-    # Main Animator
     if normalized in (
         "main animator",
         "main animation",
@@ -829,6 +823,7 @@ def search_episode(
                 displayed_name = displayed_name.strip()
 
                 results.append({
+
                     "name": displayed_name,
 
                     "main_name": get_main_name(
@@ -861,6 +856,7 @@ def search_episode(
                         "work_type",
                         "EPISODE",
                     ),
+
                 })
 
     return results
@@ -893,6 +889,7 @@ def search_local_json(
         for match in matches:
 
             results.append({
+
                 "anime": anime_title,
 
                 "slug": slug,
@@ -934,6 +931,7 @@ def search_local_json(
                 "id": match.get(
                     "id"
                 ),
+
             })
 
     return results
@@ -946,6 +944,7 @@ def search_local_json(
 def get_headers():
 
     return {
+
         "User-Agent": (
             "Mozilla/5.0 "
             "(Macintosh; Intel Mac OS X 10_15_7) "
@@ -967,6 +966,7 @@ def get_headers():
         "Cache-Control": "no-cache",
 
         "Pragma": "no-cache",
+
     }
 
 
@@ -999,7 +999,8 @@ async def get_anime_page(
             if response.status != 200:
 
                 print(
-                    f"KFSL request failed: HTTP {response.status}"
+                    f"KFSL request failed: "
+                    f"HTTP {response.status}"
                 )
 
                 return None
@@ -1054,8 +1055,11 @@ async def get_staff_profile(
         return None
 
     possible_urls = [
+
         f"{BASE_URL}/{person_id}",
+
         f"{BASE_URL}?id={person_id}",
+
     ]
 
     for url in possible_urls:
@@ -1101,11 +1105,10 @@ async def get_staff_profile(
 
                     return final_url
 
-        except asyncio.TimeoutError:
-
-            continue
-
-        except aiohttp.ClientError:
+        except (
+            asyncio.TimeoutError,
+            aiohttp.ClientError,
+        ):
 
             continue
 
@@ -1188,7 +1191,7 @@ def build_grouped_works(results):
 
 
 # ============================================================
-# SORT GROUPED WORKS
+# SORT WORK NAMES
 # ============================================================
 
 def sort_work_names(work_names):
@@ -1227,7 +1230,7 @@ def sort_work_names(work_names):
 
 
 # ============================================================
-# GET ANIMATOR WORKS
+# LOOK UP ONE ANIME
 # ============================================================
 
 async def get_animator_works(
@@ -1235,16 +1238,6 @@ async def get_animator_works(
     anime_slug,
     anime_title=None,
 ):
-
-    """
-    Priority:
-
-        1. Local JSON
-        2. Runtime KFSL fetch
-        3. Failure -> unavailable
-
-    Runtime JSON is NEVER saved.
-    """
 
     if not anime_title:
 
@@ -1331,6 +1324,7 @@ async def get_animator_works(
             )
 
         return {
+
             "name": (
                 results[0].get(
                     "name"
@@ -1352,10 +1346,11 @@ async def get_animator_works(
             "found": True,
 
             "source": "local",
+
         }
 
     # ========================================================
-    # NO LOCAL JSON
+    # RUNTIME KFSL
     # ========================================================
 
     print(
@@ -1386,18 +1381,22 @@ async def get_animator_works(
 
         if not page:
 
-            print(
-                "KFSL anime page unavailable."
-            )
-
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
+
                 "groups": {},
+
                 "found": False,
+
                 "source": "unavailable",
+
             }
 
         data = extract_staff_list_data(
@@ -1406,18 +1405,22 @@ async def get_animator_works(
 
         if not data:
 
-            print(
-                "Could not extract KFSL staffListData."
-            )
-
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
+
                 "groups": {},
+
                 "found": False,
+
                 "source": "unavailable",
+
             }
 
         results = search_local_json(
@@ -1430,13 +1433,21 @@ async def get_animator_works(
         if not results:
 
             return {
+
                 "name": animator,
+
                 "anime": anime_title,
+
                 "slug": anime_slug,
+
                 "profile_url": None,
+
                 "groups": {},
+
                 "found": False,
+
                 "source": "runtime",
+
             }
 
         grouped = build_grouped_works(
@@ -1463,6 +1474,7 @@ async def get_animator_works(
             )
 
         return {
+
             "name": (
                 results[0].get(
                     "name"
@@ -1484,22 +1496,131 @@ async def get_animator_works(
             "found": True,
 
             "source": "runtime",
+
         }
 
 
 # ============================================================
-# FORMAT RESULTS
+# MULTI-SEASON LOOKUP
+# ============================================================
+
+async def get_animator_works_all(
+    animator,
+    anime_list,
+):
+
+    """
+    Check multiple anime/season slugs.
+
+    anime_list format:
+
+        [
+            {
+                "slug": "jujutsu-kaisen",
+                "title": "Jujutsu Kaisen"
+            },
+            {
+                "slug": "jujutsu-kaisen-2nd-season",
+                "title": "Jujutsu Kaisen 2nd Season"
+            }
+        ]
+    """
+
+    results = []
+
+    if not anime_list:
+        return results
+
+    for item in anime_list:
+
+        if not isinstance(
+            item,
+            dict,
+        ):
+            continue
+
+        slug = item.get(
+            "slug"
+        )
+
+        title = item.get(
+            "title"
+        )
+
+        if not slug:
+            continue
+
+        print()
+
+        print(
+            "=" * 60
+        )
+
+        print(
+            f"Checking season: {title}"
+        )
+
+        print(
+            f"Slug: {slug}"
+        )
+
+        print(
+            "=" * 60
+        )
+
+        try:
+
+            result = await get_animator_works(
+                animator,
+                slug,
+                anime_title=title,
+            )
+
+        except Exception as e:
+
+            print(
+                f"Season lookup failed: "
+                f"{slug}: {e}"
+            )
+
+            result = {
+
+                "name": animator,
+
+                "anime": title or slug,
+
+                "slug": slug,
+
+                "profile_url": None,
+
+                "groups": {},
+
+                "found": False,
+
+                "source": "unavailable",
+
+            }
+
+        if result.get(
+            "found"
+        ) and result.get(
+            "groups"
+        ):
+
+            results.append(
+                result
+            )
+
+    return results
+
+
+# ============================================================
+# FORMAT GROUPS
 # ============================================================
 
 def format_groups(groups):
 
     formatted = {}
-
-    if not isinstance(
-        groups,
-        dict,
-    ):
-        return formatted
 
     for role, works in groups.items():
 
@@ -1527,9 +1648,41 @@ async def test():
 
     animator = "Keiichiro Watanabe"
 
-    slug = "jujutsu-kaisen-2nd-season"
+    anime_list = [
 
-    anime_title = "Jujutsu Kaisen 2nd Season"
+        {
+            "slug": "jujutsu-kaisen",
+            "title": "Jujutsu Kaisen",
+        },
+
+        {
+            "slug": "jujutsu-kaisen-2nd-season",
+            "title": "Jujutsu Kaisen 2nd Season",
+        },
+
+        {
+            "slug": (
+                "jujutsu-kaisen-3rd-season-"
+                "culling-game-part-1"
+            ),
+            "title": (
+                "Jujutsu Kaisen 3rd Season: "
+                "Culling Game Part 1"
+            ),
+        },
+
+        {
+            "slug": (
+                "jujutsu-kaisen-4th-season-"
+                "culling-game-part-2"
+            ),
+            "title": (
+                "Jujutsu Kaisen 4th Season: "
+                "Culling Game Part 2"
+            ),
+        },
+
+    ]
 
     print()
 
@@ -1538,80 +1691,39 @@ async def test():
     )
 
     print(
-        "Testing Staff Work Scraper"
+        "TESTING MULTI-SEASON STAFF WORK SCRAPER"
     )
 
     print(
         "=" * 70
     )
 
-    works = await get_animator_works(
+    results = await get_animator_works_all(
         animator,
-        slug,
-        anime_title,
+        anime_list,
     )
 
-    print(
-        "=" * 70
-    )
+    for result in results:
 
-    print(
-        f"Name: {works['name']}"
-    )
-
-    print(
-        f"Anime: {works['anime']}"
-    )
-
-    print(
-        f"Source: {works.get('source')}"
-    )
-
-    print(
-        f"Found: {works.get('found')}"
-    )
-
-    print(
-        f"Profile: {works['profile_url']}"
-    )
-
-    print()
-
-    for role, works_list in works[
-        "groups"
-    ].items():
+        print()
 
         print(
-            f"{role}: "
-            + ", ".join(
-                str(work)
-                for work in works_list
-            )
+            f"📺 {result['anime']}"
         )
 
-    print()
-
-    print(
-        "DISPLAY FORMAT"
-    )
-
-    print(
-        "-" * 70
-    )
-
-    formatted = format_groups(
-        works["groups"]
-    )
-
-    for role, works_list in formatted.items():
-
-        print(
-            f"{role}: "
-            + ", ".join(
-                str(work)
-                for work in works_list
-            )
+        formatted = format_groups(
+            result["groups"]
         )
+
+        for role, works in formatted.items():
+
+            print(
+                f"{role}: "
+                + ", ".join(
+                    str(x)
+                    for x in works
+                )
+            )
 
     print()
 
@@ -1621,7 +1733,7 @@ async def test():
 
 
 # ============================================================
-# RUN TEST
+# RUN
 # ============================================================
 
 if __name__ == "__main__":
