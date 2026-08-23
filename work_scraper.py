@@ -40,6 +40,7 @@ ROLE_NAMES = {
 
 NAME_ALIASES = {
     "keiichiro watanabe": "keiichirou watanabe",
+    "kohei hirota": "kouhei hirota",
 }
 
 
