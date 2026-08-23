@@ -1,7 +1,6 @@
 import os
 import re
-import json
-import glob
+import json 
 
 import discord
 from dotenv import load_dotenv
@@ -25,9 +24,12 @@ from work_scraper import (
 
 load_dotenv()
 
-TOKEN = os.getenv("DISCORD_TOKEN")
+TOKEN = os.getenv(
+    "DISCORD_TOKEN"
+)
 
 if not TOKEN:
+
     raise RuntimeError(
         "DISCORD_TOKEN is missing.\n"
         "Create a .env file containing:\n"
@@ -87,6 +89,7 @@ ROLE_SHORT_NAMES = {
     "2nd Key Animation": "2KA",
 
     "Art Director": "Art Director",
+
 }
 
 
@@ -143,7 +146,7 @@ ANIME_INDEX = load_anime_index()
 
 
 # ============================================================
-# NORMALIZED ANIME INDEX
+# ANIME INDEX NORMALIZED LOOKUP
 # ============================================================
 
 def build_anime_index_normalized():
@@ -152,7 +155,9 @@ def build_anime_index_normalized():
 
     for name, slug in ANIME_INDEX.items():
 
-        normalized_name = normalize(name)
+        normalized_name = normalize(
+            name
+        )
 
         if not normalized_name:
             continue
@@ -178,13 +183,12 @@ ANIME_INDEX_NORMALIZED = (
 
 def get_anime_slug(anime):
 
-    normalized = normalize(anime)
-
-    if not normalized:
-        return ""
+    normalized = normalize(
+        anime
+    )
 
     # --------------------------------------------------------
-    # Exact anime_index match
+    # Exact anime_index.json match
     # --------------------------------------------------------
 
     if normalized in ANIME_INDEX_NORMALIZED:
@@ -195,31 +199,19 @@ def get_anime_slug(anime):
 
         if slugs:
 
-            return sorted(slugs)[0]
+            return sorted(
+                slugs
+            )[0]
 
     # --------------------------------------------------------
-    # Manual aliases
+    # Existing manual aliases
     # --------------------------------------------------------
 
     if normalized in ANIME_ALIASES:
 
-        alias = ANIME_ALIASES[
+        return ANIME_ALIASES[
             normalized
         ]
-
-        if isinstance(
-            alias,
-            (list, tuple, set)
-        ):
-
-            if alias:
-                return str(
-                    sorted(alias)[0]
-                ).strip()
-
-        elif alias:
-
-            return str(alias).strip()
 
     # --------------------------------------------------------
     # Generic fallback
@@ -233,291 +225,30 @@ def get_anime_slug(anime):
 
 
 # ============================================================
-# SEASON NUMBER HELPER
-# ============================================================
-
-def get_season_number(slug):
-
-    if not slug:
-        return 1
-
-    text = normalize(
-        str(slug)
-    )
-
-    # --------------------------------------------------------
-    # 2nd / 3rd / 4th season
-    # --------------------------------------------------------
-
-    match = re.search(
-        r"\b(\d+)(?:st|nd|rd|th)\s+season\b",
-        text,
-    )
-
-    if match:
-
-        try:
-            return int(
-                match.group(1)
-            )
-        except ValueError:
-            pass
-
-    # --------------------------------------------------------
-    # Numeric suffix such as:
-    #
-    # my hero academia 3
-    # --------------------------------------------------------
-
-    match = re.search(
-        r"\s(\d+)$",
-        text,
-    )
-
-    if match:
-
-        try:
-            return int(
-                match.group(1)
-            )
-        except ValueError:
-            pass
-
-    # --------------------------------------------------------
-    # Season X
-    # --------------------------------------------------------
-
-    match = re.search(
-        r"\bseason\s+(\d+)\b",
-        text,
-    )
-
-    if match:
-
-        try:
-            return int(
-                match.group(1)
-            )
-        except ValueError:
-            pass
-
-    # --------------------------------------------------------
-    # Original season
-    # --------------------------------------------------------
-
-    return 1
-
-
-# ============================================================
-# ANIME FILE HELPERS
-# ============================================================
-
-def get_local_anime_slugs():
-
-    slugs = []
-
-    base_dir = os.path.dirname(
-        os.path.abspath(__file__)
-    )
-
-    for filename in glob.glob(
-        os.path.join(
-            base_dir,
-            "*.json",
-        )
-    ):
-
-        basename = os.path.basename(
-            filename
-        )
-
-        if basename in (
-            "anime_index.json",
-            "animator_index.json",
-        ):
-            continue
-
-        if not basename.endswith(".json"):
-            continue
-
-        slug = basename[:-5].strip()
-
-        if slug:
-            slugs.append(slug)
-
-    return slugs
-
-
-# ============================================================
-# FRANCHISE EXCLUSIONS
-# ============================================================
-
-def is_non_main_entry(slug):
-
-    text = normalize(
-        str(slug)
-    )
-
-    excluded_terms = [
-
-        # Movies
-        "movie",
-        "film",
-
-        # OVAs / specials
-        "ova",
-        "special",
-        "specials",
-        "ona",
-
-        # Promotional material
-        "pv",
-        "promotion",
-        "promotional",
-
-        # Recaps / compilations
-        "recap",
-        "compilation",
-
-        # Spin-offs
-        "vigilantes",
-
-        # MHA movies
-        "heroes rising",
-        "you re next",
-        "ua battle heroes",
-
-        # Other obvious side material
-        "phantom parade",
-
-    ]
-
-    return any(
-        term in text
-        for term in excluded_terms
-    )
-
-
-# ============================================================
-# FRANCHISE DEFINITIONS
-# ============================================================
-
-FRANCHISES = {
-
-    "jjk": {
-        "keywords": [
-            "jujutsu kaisen",
-            "jujutsu-kaisen",
-            "呪術廻戦",
-        ],
-    },
-
-    "jujutsu kaisen": {
-        "keywords": [
-            "jujutsu kaisen",
-            "jujutsu-kaisen",
-            "呪術廻戦",
-        ],
-    },
-
-    "mha": {
-        "keywords": [
-            "my hero academia",
-            "boku no hero academia",
-        ],
-    },
-
-    "bnha": {
-        "keywords": [
-            "my hero academia",
-            "boku no hero academia",
-        ],
-    },
-
-    "my hero academia": {
-        "keywords": [
-            "my hero academia",
-            "boku no hero academia",
-        ],
-    },
-
-    "boku no hero academia": {
-        "keywords": [
-            "my hero academia",
-            "boku no hero academia",
-        ],
-    },
-
-    "jojo": {
-        "keywords": [
-            "jojo",
-            "jojo's bizarre adventure",
-            "jojo s bizarre adventure",
-            "jojo no kimyou na bouken",
-        ],
-    },
-}
-
-
-# ============================================================
-# MATCH FRANCHISE SLUG
-# ============================================================
-
-def slug_matches_franchise(
-    slug,
-    keywords,
-):
-
-    normalized_slug = normalize(
-        str(slug)
-    )
-
-    if not normalized_slug:
-        return False
-
-    for keyword in keywords:
-
-        normalized_keyword = normalize(
-            keyword
-        )
-
-        if not normalized_keyword:
-            continue
-
-        if (
-            normalized_keyword
-            in normalized_slug
-        ):
-
-            return True
-
-    return False
-
-
-# ============================================================
-# GET ALL ANIME SEASONS
+# FIND ALL ANIME ENTRIES
 # ============================================================
 
 def get_all_anime_seasons(anime):
     """
-    Find all relevant KFSL anime slugs.
+    Find all relevant KFSL anime slugs for an anime query.
 
-    Examples:
-
+    Franchise queries:
         jjk
         jujutsu kaisen
-
         mha
         my hero academia
+        jojo
 
+    Specific queries:
         my hero academia 3
+        jjk 2
+        jojo part 3
 
-        jjk 3
+    Franchise searches include main TV seasons and exclude
+    movies, specials, OVAs and obvious spin-offs.
     """
 
-    normalized_input = normalize(
-        anime
-    )
+    normalized_input = normalize(anime)
 
     if not normalized_input:
         return []
@@ -525,28 +256,95 @@ def get_all_anime_seasons(anime):
     candidates = {}
 
     # ========================================================
-    # HELPER
+    # HELPERS
     # ========================================================
 
     def add_candidate(slug):
+        if slug:
+            slug = str(slug).strip()
+            if slug:
+                candidates[slug] = True
 
-        if not slug:
-            return
+    def is_excluded(slug):
+        text = normalize(str(slug))
 
-        slug = str(
-            slug
-        ).strip()
+        excluded = [
+            "movie",
+            "film",
+            "ova",
+            "special",
+            "specials",
+            "ona",
+            "pv",
+            "promotion",
+            "recap",
+            "compilation",
+            "vigilantes",
+            "heroes rising",
+            "you re next",
+            "ua battle heroes",
+        ]
 
-        if not slug:
-            return
-
-        if is_non_main_entry(slug):
-            return
-
-        candidates[slug] = True
+        return any(
+            term in text
+            for term in excluded
+        )
 
     # ========================================================
-    # DETECT SPECIFIC SEASON NUMBER
+    # FRANCHISE ALIASES
+    # ========================================================
+
+    franchise_aliases = {
+        "mha": [
+            "my hero academia",
+            "boku no hero academia",
+        ],
+
+        "bnha": [
+            "my hero academia",
+            "boku no hero academia",
+        ],
+
+        "jjk": [
+            "jujutsu kaisen",
+            "jujutsu-kaisen",
+            "呪術廻戦",
+        ],
+
+        "jujutsu kaisen": [
+            "jujutsu kaisen",
+            "jujutsu-kaisen",
+            "呪術廻戦",
+        ],
+
+        "my hero academia": [
+            "my hero academia",
+            "boku no hero academia",
+        ],
+
+        "boku no hero academia": [
+            "my hero academia",
+            "boku no hero academia",
+        ],
+
+        "jojo": [
+            "jojo",
+            "jojo's bizarre adventure",
+            "jojo s bizarre adventure",
+            "jojo no kimyou na bouken",
+        ],
+    }
+
+    franchise_keywords = franchise_aliases.get(
+        normalized_input
+    )
+
+    is_franchise_search = (
+        franchise_keywords is not None
+    )
+
+    # ========================================================
+    # SPECIFIC NUMBER / SEASON SEARCH
     # ========================================================
 
     specific_match = re.search(
@@ -554,42 +352,11 @@ def get_all_anime_seasons(anime):
         normalized_input,
     )
 
-    requested_number = None
-
     if specific_match:
 
-        requested_number = int(
-            specific_match.group(1)
-        )
+        requested_number = specific_match.group(1)
 
-    # ========================================================
-    # DETECT FRANCHISE
-    # ========================================================
-
-    franchise = FRANCHISES.get(
-        normalized_input
-    )
-
-    # ========================================================
-    # SPECIFIC SEASON SEARCH
-    # ========================================================
-
-    if requested_number is not None:
-
-        # ----------------------------------------------------
-        # Remove season number from query.
-        # ----------------------------------------------------
-
-        query_without_number = re.sub(
-            r"\b(?:season|s|part|p)?\s*\d+\b",
-            "",
-            normalized_input,
-        ).strip()
-
-        # ----------------------------------------------------
-        # Exact index matches
-        # ----------------------------------------------------
-
+        # Exact index match first.
         exact_matches = (
             ANIME_INDEX_NORMALIZED.get(
                 normalized_input,
@@ -598,531 +365,362 @@ def get_all_anime_seasons(anime):
         )
 
         for slug in exact_matches:
-
             add_candidate(slug)
 
-        # ----------------------------------------------------
-        # Search anime_index
-        # ----------------------------------------------------
+        if candidates:
+            return list(candidates.keys())
 
+        # Broader search for a specific season.
         for name, slug in ANIME_INDEX.items():
 
-            normalized_name = normalize(
-                name
-            )
-
-            normalized_slug = normalize(
-                slug
-            )
+            normalized_name = normalize(name)
 
             if not normalized_name:
                 continue
 
-            # The base franchise must match.
-            if query_without_number:
+            # Must contain the query's main words.
+            query_without_number = re.sub(
+                r"\b(?:season|s|part|p)?\s*\d+\b",
+                "",
+                normalized_input,
+            ).strip()
 
-                base_matches = False
+            if (
+                query_without_number
+                and query_without_number
+                not in normalized_name
+            ):
+                continue
 
-                # Franchise query
-                if franchise:
-
-                    for keyword in franchise["keywords"]:
-
-                        normalized_keyword = normalize(
-                            keyword
-                        )
-
-                        if (
-                            normalized_keyword
-                            in normalized_name
-                            or normalized_keyword
-                            in normalized_slug
-                        ):
-
-                            base_matches = True
-                            break
-
-                # Normal query
-                else:
-
-                    if (
-                        query_without_number
-                        in normalized_name
-                        or query_without_number
-                        in normalized_slug
-                    ):
-
-                        base_matches = True
-
-                if not base_matches:
-                    continue
-
-            # ------------------------------------------------
-            # Determine season number from slug/name.
-            # ------------------------------------------------
-
-            combined = (
-                normalized_name
-                + " "
-                + normalized_slug
-            )
-
-            number_matches = [
-
-                rf"\b{requested_number}(?:st|nd|rd|th)?\s+season\b",
-
-                rf"\bseason\s+{requested_number}\b",
-
-                rf"\b{requested_number}\s+season\b",
-
-                rf"\b{requested_number}\b",
-
+            number_patterns = [
+                f" {requested_number}",
+                f"-{requested_number}",
+                f" {requested_number}th",
+                f" {requested_number}st",
+                f" {requested_number}nd",
+                f" {requested_number}rd",
+                f" season {requested_number}",
+                f" {requested_number} season",
+                f" part {requested_number}",
             ]
 
             if any(
-                re.search(
-                    pattern,
-                    combined,
-                )
-                for pattern in number_matches
+                pattern in normalized_name
+                for pattern in number_patterns
             ):
-
-                # Avoid matching unrelated numbers.
-                detected_season = get_season_number(
-                    slug
-                )
-
-                if (
-                    detected_season
-                    == requested_number
-                ):
-
-                    add_candidate(slug)
-
-        # ----------------------------------------------------
-        # Search local JSON filenames.
-        # ----------------------------------------------------
-
-        for slug in get_local_anime_slugs():
-
-            normalized_slug = normalize(
-                slug
-            )
-
-            if franchise:
-
-                if not slug_matches_franchise(
-                    slug,
-                    franchise["keywords"],
-                ):
-                    continue
-
-            else:
-
-                if (
-                    query_without_number
-                    not in normalized_slug
-                ):
-                    continue
-
-            detected_season = get_season_number(
-                slug
-            )
-
-            if (
-                detected_season
-                == requested_number
-            ):
-
                 add_candidate(slug)
 
-        # ----------------------------------------------------
-        # Specific query is done.
-        # ----------------------------------------------------
-
-        return sort_anime_slugs(
-            list(candidates.keys())
-        )
+        return list(candidates.keys())
 
     # ========================================================
     # FRANCHISE SEARCH
     # ========================================================
 
-    if franchise:
-
-        keywords = franchise[
-            "keywords"
-        ]
+    if is_franchise_search:
 
         # ----------------------------------------------------
-        # A. anime_index.json
+        # A. Search anime_index.json
         # ----------------------------------------------------
 
         for name, slug in ANIME_INDEX.items():
 
-            normalized_name = normalize(
-                name
+            normalized_name = normalize(name)
+            normalized_slug = normalize(slug)
+
+            if not normalized_name:
+                continue
+
+            matched = any(
+                keyword
+                and (
+                    keyword in normalized_name
+                    or keyword in normalized_slug
+                )
+                for keyword in franchise_keywords
             )
+
+            if not matched:
+                continue
+
+            if is_excluded(slug):
+                continue
+
+            add_candidate(slug)
+
+        # ----------------------------------------------------
+        # B. Search local KFSL files
+        #
+        # This is important because some canonical seasons
+        # aren't represented properly in anime_index.json.
+        # ----------------------------------------------------
+
+        import glob
+        import os
+
+        local_files = glob.glob("*.json")
+
+        for filename in local_files:
+
+            if filename in (
+                "anime_index.json",
+                "animator_index.json",
+            ):
+                continue
+
+            basename = os.path.basename(
+                filename
+            )
+
+            slug = basename[:-5]
 
             normalized_slug = normalize(
                 slug
             )
 
-            if not normalized_name:
-                continue
+            # ------------------------------------------------
+            # JJK
+            # ------------------------------------------------
 
-            matched = False
-
-            for keyword in keywords:
-
-                normalized_keyword = normalize(
-                    keyword
-                )
-
-                if (
-                    normalized_keyword
-                    in normalized_name
-                    or normalized_keyword
-                    in normalized_slug
-                ):
-
-                    matched = True
-                    break
-
-            if not matched:
-                continue
-
-            add_candidate(slug)
-
-        # ----------------------------------------------------
-        # B. Local KFSL JSON filenames
-        # ----------------------------------------------------
-
-        for slug in get_local_anime_slugs():
-
-            if not slug_matches_franchise(
-                slug,
-                keywords,
+            if normalized_input in (
+                "jjk",
+                "jujutsu kaisen",
             ):
-                continue
 
-            add_candidate(slug)
-
-        # ----------------------------------------------------
-        # C. IMPORTANT:
-        #
-        # For JJK and MHA, explicitly make sure canonical
-        # seasons are recognized even if anime_index has
-        # incomplete naming.
-        # ----------------------------------------------------
-
-        if normalized_input in (
-            "jjk",
-            "jujutsu kaisen",
-        ):
-
-            canonical_jjk = [
-
-                "jujutsu-kaisen",
-
-                "jujutsu-kaisen-2nd-season",
-
-                "jujutsu-kaisen-3rd-season-culling-game-part-1",
-
-                "jujutsu-kaisen-4th-season-culling-game-part-2",
-
-            ]
-
-            for slug in canonical_jjk:
-
-                # Only add if the actual local JSON exists
-                # OR the slug exists in anime_index.
-                exists_in_index = any(
-                    str(indexed_slug).strip()
-                    == slug
-                    for indexed_slug
-                    in ANIME_INDEX.values()
-                )
-
-                exists_locally = (
-                    slug
-                    in get_local_anime_slugs()
-                )
-
-                if (
-                    exists_in_index
-                    or exists_locally
+                if not (
+                    "jujutsu kaisen" in normalized_slug
+                    or normalized_slug.startswith(
+                        "jujutsu kaisen"
+                    )
                 ):
+                    continue
 
-                    add_candidate(slug)
+                if is_excluded(slug):
+                    continue
 
-        elif normalized_input in (
-            "mha",
-            "bnha",
-            "my hero academia",
-            "boku no hero academia",
-        ):
+                add_candidate(slug)
 
-            canonical_mha = [
+            # ------------------------------------------------
+            # MHA
+            # ------------------------------------------------
 
-                "my-hero-academia",
+            elif normalized_input in (
+                "mha",
+                "bnha",
+                "my hero academia",
+                "boku no hero academia",
+            ):
 
-                "my-hero-academia-2nd-season",
+                if "my hero academia" not in normalized_slug:
+                    continue
 
-                "my-hero-academia-3",
+                if is_excluded(slug):
+                    continue
 
-                "my-hero-academia-4",
-
-                "my-hero-academia-5",
-
-                "my-hero-academia-6",
-
-                "my-hero-academia-7",
-
-                "my-hero-academia-final-season",
-
-            ]
-
-            for slug in canonical_mha:
-
-                exists_in_index = any(
-                    str(indexed_slug).strip()
-                    == slug
-                    for indexed_slug
-                    in ANIME_INDEX.values()
-                )
-
-                exists_locally = (
-                    slug
-                    in get_local_anime_slugs()
-                )
-
-                if (
-                    exists_in_index
-                    or exists_locally
+                # Exclude files that aren't main TV seasons.
+                if any(
+                    x in normalized_slug
+                    for x in [
+                        "vigilantes",
+                        "heroes rising",
+                        "you re next",
+                        "ua battle heroes",
+                    ]
                 ):
+                    continue
 
-                    add_candidate(slug)
+                add_candidate(slug)
 
-        # ----------------------------------------------------
-        # Return franchise results.
-        # ----------------------------------------------------
+            # ------------------------------------------------
+            # JOJO
+            # ------------------------------------------------
 
-        return sort_anime_slugs(
-            list(candidates.keys())
-        )
+            elif normalized_input == "jojo":
+
+                if "jojo" not in normalized_slug:
+                    continue
+
+                if is_excluded(slug):
+                    continue
+
+                add_candidate(slug)
 
     # ========================================================
     # NORMAL SEARCH
     # ========================================================
 
-    # --------------------------------------------------------
-    # Exact anime_index match
-    # --------------------------------------------------------
+    else:
 
-    exact_matches = (
-        ANIME_INDEX_NORMALIZED.get(
-            normalized_input,
-            set(),
+        # Exact index match.
+        exact_matches = (
+            ANIME_INDEX_NORMALIZED.get(
+                normalized_input,
+                set(),
+            )
         )
-    )
 
-    for slug in exact_matches:
+        for slug in exact_matches:
+            add_candidate(slug)
 
-        add_candidate(slug)
+        # Manual alias.
+        if normalized_input in ANIME_ALIASES:
 
-    # --------------------------------------------------------
-    # Manual alias
-    # --------------------------------------------------------
-
-    if normalized_input in ANIME_ALIASES:
-
-        alias = ANIME_ALIASES[
-            normalized_input
-        ]
-
-        if isinstance(
-            alias,
-            (list, tuple, set)
-        ):
-
-            for slug in alias:
-
-                add_candidate(slug)
-
-        else:
-
-            add_candidate(alias)
-
-    # --------------------------------------------------------
-    # Containment fallback
-    # --------------------------------------------------------
-
-    if not candidates:
-
-        for name, slug in ANIME_INDEX.items():
-
-            normalized_name = normalize(
-                name
-            )
-
-            normalized_slug = normalize(
-                slug
-            )
-
-            if not normalized_name:
-                continue
-
-            if (
+            alias = ANIME_ALIASES[
                 normalized_input
-                in normalized_name
-                or normalized_input
-                in normalized_slug
-                or normalized_name
-                in normalized_input
+            ]
+
+            if isinstance(
+                alias,
+                (list, tuple, set)
             ):
+                for slug in alias:
+                    add_candidate(slug)
+            else:
+                add_candidate(alias)
 
-                add_candidate(slug)
+        # Containment fallback.
+        if not candidates:
 
-    # --------------------------------------------------------
-    # Local filename fallback
-    # --------------------------------------------------------
+            for name, slug in ANIME_INDEX.items():
 
-    if not candidates:
+                normalized_name = normalize(name)
 
-        for slug in get_local_anime_slugs():
+                if not normalized_name:
+                    continue
 
-            normalized_slug = normalize(
-                slug
-            )
+                if (
+                    normalized_input
+                    in normalized_name
+                ):
+                    add_candidate(slug)
 
-            if (
-                normalized_input
-                in normalized_slug
-                or normalized_slug
-                in normalized_input
-            ):
-
-                add_candidate(slug)
+                elif (
+                    normalized_name
+                    in normalized_input
+                ):
+                    add_candidate(slug)
 
     # ========================================================
-    # FINAL FALLBACK
+    # FALLBACK
     # ========================================================
 
     if not candidates:
 
-        fallback = get_anime_slug(
-            anime
-        )
+        fallback = get_anime_slug(anime)
 
         if fallback:
+            add_candidate(fallback)
 
-            add_candidate(
-                fallback
-            )
+    # ========================================================
+    # SORT
+    # ========================================================
 
-    return sort_anime_slugs(
-        list(candidates.keys())
-    )
-
-
-# ============================================================
-# SORT ANIME SLUGS
-# ============================================================
-
-def sort_anime_slugs(slugs):
+    slugs = list(candidates.keys())
 
     def sort_key(slug):
 
-        text = normalize(
-            str(slug)
-        )
+        text = normalize(str(slug))
 
-        # ----------------------------------------------------
-        # Original series
-        # ----------------------------------------------------
-
+        # Main original series first.
         if text in (
             "jujutsu kaisen",
             "my hero academia",
         ):
-
             return (
                 0,
-                1,
+                0,
                 text,
             )
 
-        # ----------------------------------------------------
-        # Explicit ordinal seasons
-        # ----------------------------------------------------
-
+        # 2nd / 3rd / 4th season.
         match = re.search(
-            r"\b(\d+)(?:st|nd|rd|th)\s+season\b",
+            r"(\d+)(?:st|nd|rd|th)? season",
             text,
         )
 
         if match:
-
             return (
-                0,
+                1,
                 int(match.group(1)),
                 text,
             )
 
-        # ----------------------------------------------------
-        # Numeric MHA style
-        # ----------------------------------------------------
-
+        # Numeric suffix.
         match = re.search(
             r"\s(\d+)$",
             text,
         )
 
         if match:
-
             return (
-                0,
+                1,
                 int(match.group(1)),
                 text,
             )
 
-        # ----------------------------------------------------
-        # Final season
-        # ----------------------------------------------------
-
-        if "final season" in text:
-
-            return (
-                0,
-                999,
-                text,
-            )
-
-        # ----------------------------------------------------
-        # Everything else
-        # ----------------------------------------------------
-
         return (
-            1,
+            2,
             9999,
             text,
         )
 
-    return sorted(
-        list(dict.fromkeys(slugs)),
-        key=sort_key,
-    )
+    slugs.sort(key=sort_key)
+
+    return slugs
 
 
 # ============================================================
 # DISPLAY TITLE
 # ============================================================
 
-def get_anime_display_title(slug):
+def get_anime_display_title(
+    slug
+):
 
     # --------------------------------------------------------
-    # Known titles
+    # Prefer a human-readable name from anime_index.json.
+    # --------------------------------------------------------
+
+    possible_names = []
+
+    for name, indexed_slug in ANIME_INDEX.items():
+
+        if str(indexed_slug).strip() != str(slug).strip():
+            continue
+
+        normalized_name = normalize(
+            name
+        )
+
+        if not normalized_name:
+            continue
+
+        # Prefer English-looking names.
+
+        if re.search(
+            r"[a-z]",
+            name,
+            re.IGNORECASE,
+        ):
+
+            possible_names.append(
+                name
+            )
+
+    if possible_names:
+
+        # Prefer the shortest readable English name.
+
+        possible_names.sort(
+            key=lambda x: (
+                len(x),
+                x.lower(),
+            )
+        )
+
+        return possible_names[0].strip()
+
+    # --------------------------------------------------------
+    # Existing known titles
     # --------------------------------------------------------
 
     known_titles = {
@@ -1139,32 +737,11 @@ def get_anime_display_title(slug):
         "jujutsu-kaisen-4th-season-culling-game-part-2":
             "Jujutsu Kaisen 4th Season: Culling Game Part 2",
 
-        "my-hero-academia":
-            "My Hero Academia",
-
-        "my-hero-academia-2nd-season":
-            "My Hero Academia 2nd Season",
-
-        "my-hero-academia-3":
-            "My Hero Academia 3rd Season",
-
-        "my-hero-academia-4":
-            "My Hero Academia 4th Season",
-
-        "my-hero-academia-5":
-            "My Hero Academia 5th Season",
-
-        "my-hero-academia-6":
-            "My Hero Academia 6th Season",
-
-        "my-hero-academia-7":
-            "My Hero Academia 7th Season",
+        "sousou-no-frieren-2nd-season":
+            "Frieren: Beyond Journey's End 2nd Season",
 
         "my-hero-academia-final-season":
             "My Hero Academia Final Season",
-
-        "sousou-no-frieren-2nd-season":
-            "Frieren: Beyond Journey's End 2nd Season",
 
         "bleach-thousand-year-blood-war":
             "Bleach: Thousand-Year Blood War",
@@ -1177,6 +754,7 @@ def get_anime_display_title(slug):
 
         "bleach-thousand-year-blood-war-the-calamity":
             "Bleach: Thousand-Year Blood War — The Calamity",
+
     }
 
     if slug in known_titles:
@@ -1186,46 +764,83 @@ def get_anime_display_title(slug):
         ]
 
     # --------------------------------------------------------
-    # Try anime_index
-    # --------------------------------------------------------
-
-    possible_names = []
-
-    for name, indexed_slug in ANIME_INDEX.items():
-
-        if (
-            str(indexed_slug).strip()
-            != str(slug).strip()
-        ):
-            continue
-
-        if re.search(
-            r"[a-z]",
-            name,
-            re.IGNORECASE,
-        ):
-
-            possible_names.append(
-                name
-            )
-
-    if possible_names:
-
-        possible_names.sort(
-            key=lambda x: (
-                len(x),
-                x.lower(),
-            )
-        )
-
-        return possible_names[0].strip()
-
-    # --------------------------------------------------------
     # Generic fallback
     # --------------------------------------------------------
 
     return (
         str(slug)
+        .replace(
+            "-",
+            " ",
+        )
+        .title()
+    )
+
+
+# ============================================================
+# DISPLAY TITLE
+# ============================================================
+
+def get_anime_display_title(
+    slug
+):
+
+    """
+    Convert a slug into a readable title.
+
+    Known aliases are preferred.
+    """
+
+    # --------------------------------------------------------
+    # Special known titles.
+    # --------------------------------------------------------
+
+    known_titles = {
+
+        "jujutsu-kaisen":
+            "Jujutsu Kaisen",
+
+        "jujutsu-kaisen-2nd-season":
+            "Jujutsu Kaisen 2nd Season",
+
+        "jujutsu-kaisen-3rd-season-culling-game-part-1":
+            "Jujutsu Kaisen 3rd Season: Culling Game Part 1",
+
+        "jujutsu-kaisen-4th-season-culling-game-part-2":
+            "Jujutsu Kaisen 4th Season: Culling Game Part 2",
+
+        "sousou-no-frieren-2nd-season":
+            "Frieren: Beyond Journey's End 2nd Season",
+
+        "my-hero-academia-final-season":
+            "My Hero Academia Final Season",
+
+        "bleach-thousand-year-blood-war":
+            "Bleach: Thousand-Year Blood War",
+
+        "bleach-thousand-year-blood-war-the-separation":
+            "Bleach: Thousand-Year Blood War — The Separation",
+
+        "bleach-thousand-year-blood-war-the-conflict":
+            "Bleach: Thousand-Year Blood War — The Conflict",
+
+        "bleach-thousand-year-blood-war-the-calamity":
+            "Bleach: Thousand-Year Blood War — The Calamity",
+
+    }
+
+    if slug in known_titles:
+
+        return known_titles[
+            slug
+        ]
+
+    # --------------------------------------------------------
+    # Generic fallback.
+    # --------------------------------------------------------
+
+    return (
+        slug
         .replace(
             "-",
             " ",
@@ -1306,6 +921,7 @@ def split_text(
             current = piece
 
     if current:
+
         parts.append(
             current
         )
@@ -1317,7 +933,9 @@ def split_text(
 # FORMAT WORK EPISODES
 # ============================================================
 
-def format_work_episodes(episodes):
+def format_work_episodes(
+    episodes
+):
 
     if not episodes:
         return ""
@@ -1398,7 +1016,10 @@ def format_work_episodes(episodes):
                 f"#{number:02d}"
             )
 
-            if formatted_text not in seen:
+            if (
+                formatted_text
+                not in seen
+            ):
 
                 formatted.append(
                     formatted_text
@@ -1529,6 +1150,9 @@ async def staff(
 
     try:
 
+        # Existing staff command uses season detection
+        # from the first/current season system.
+
         season = get_season_number(
             get_anime_slug(
                 anime
@@ -1603,75 +1227,128 @@ async def staff(
         color=EMBED_COLOR,
     )
 
+    # --------------------------------------------------------
+    # STORYBOARD
+    # --------------------------------------------------------
+
     if data.get("SB"):
 
         embed.add_field(
             name="🎬 Storyboard",
             value=format_names(
-                data.get("SB", [])
+                data.get(
+                    "SB",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # EPISODE DIRECTOR
+    # --------------------------------------------------------
 
     if data.get("ED"):
 
         embed.add_field(
             name="🎞️ Episode Director",
             value=format_names(
-                data.get("ED", [])
+                data.get(
+                    "ED",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # AD
+    # --------------------------------------------------------
 
     if data.get("AD"):
 
         embed.add_field(
             name="✏️ Animation Director",
             value=format_names(
-                data.get("AD", [])
+                data.get(
+                    "AD",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # ASS AD
+    # --------------------------------------------------------
 
     if data.get("Ass. AD"):
 
         embed.add_field(
             name="🧩 Assistant Animation Director",
             value=format_names(
-                data.get("Ass. AD", [])
+                data.get(
+                    "Ass. AD",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # CAD
+    # --------------------------------------------------------
 
     if data.get("CAD"):
 
         embed.add_field(
             name="👑 Chief Animation Director",
             value=format_names(
-                data.get("CAD", [])
+                data.get(
+                    "CAD",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # CHARACTER DESIGN
+    # --------------------------------------------------------
 
     if data.get("CD"):
 
         embed.add_field(
             name="🎨 Character Design",
             value=format_names(
-                data.get("CD", [])
+                data.get(
+                    "CD",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # KA
+    # --------------------------------------------------------
 
     if data.get("KA"):
 
         embed.add_field(
             name="🔥 Key Animation",
             value=format_names(
-                data.get("KA", [])
+                data.get(
+                    "KA",
+                    [],
+                )
             ),
             inline=False,
         )
+
+    # --------------------------------------------------------
+    # 2KA
+    # --------------------------------------------------------
 
     if data.get("2KA"):
 
@@ -1681,12 +1358,19 @@ async def staff(
             inline=False,
         )
 
+    # --------------------------------------------------------
+    # ARTIST
+    # --------------------------------------------------------
+
     if data.get("Artist"):
 
         embed.add_field(
             name="🎵 Artist",
             value=format_names(
-                data.get("Artist", [])
+                data.get(
+                    "Artist",
+                    [],
+                )
             ),
             inline=False,
         )
@@ -1718,9 +1402,14 @@ async def work(
     animator: str,
 ):
 
+    # ========================================================
+    # ACKNOWLEDGE ONCE
+    # ========================================================
+
     await interaction.response.defer()
 
     anime = anime.strip()
+
     animator = animator.strip()
 
     if not anime:
@@ -1823,6 +1512,10 @@ async def work(
             f"WORK ERROR: {e!r}"
         )
 
+        # IMPORTANT:
+        # We already deferred the interaction.
+        # Therefore we ONLY use followup here.
+
         await interaction.followup.send(
             "❌ Work lookup encountered an error.\n"
             f"`{type(e).__name__}: {e}`"
@@ -1903,6 +1596,10 @@ async def work(
         if not groups:
             continue
 
+        # ----------------------------------------------------
+        # SEASON HEADER
+        # ----------------------------------------------------
+
         season_text_parts = []
 
         # ----------------------------------------------------
@@ -1917,7 +1614,8 @@ async def work(
         if main_animator:
 
             season_text_parts.append(
-                "**Main Animator:** Overview"
+                "**Main Animator:** "
+                "Overview"
             )
 
         # ----------------------------------------------------
@@ -2023,6 +1721,10 @@ async def work(
                 f"{role_short}: {episode_text}"
             )
 
+        # ----------------------------------------------------
+        # NOTHING TO DISPLAY
+        # ----------------------------------------------------
+
         if not season_text_parts:
             continue
 
@@ -2086,6 +1788,9 @@ async def work(
             f"WORK EMBED ERROR: {e!r}"
         )
 
+        # Since the interaction was deferred,
+        # use followup only.
+
         try:
 
             await interaction.followup.send(
@@ -2140,6 +1845,11 @@ async def on_app_command_error(
 
     try:
 
+        # ----------------------------------------------------
+        # If interaction was already acknowledged/deferred,
+        # NEVER call response.send_message().
+        # ----------------------------------------------------
+
         if interaction.response.is_done():
 
             await interaction.followup.send(
@@ -2170,5 +1880,4 @@ async def on_app_command_error(
 # ============================================================
 
 if __name__ == "__main__":
-
     bot.run(TOKEN)
