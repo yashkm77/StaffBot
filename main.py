@@ -1603,101 +1603,143 @@ async def staff(
         color=EMBED_COLOR,
     )
 
-    if data.get("SB"):
+    # ========================================================
+    # ADD STAFF FIELDS SAFELY
+    #
+    # Discord limits:
+    #   - Each field value: 1024 characters
+    #   - Each embed: 25 fields
+    #   - Total embed text: 6000 characters
+    #
+    # Large productions/movies can easily exceed the field limit,
+    # so every role is split automatically.
+    # ========================================================
 
-        embed.add_field(
-            name="🎬 Storyboard",
-            value=format_names(
-                data.get("SB", [])
-            ),
-            inline=False,
-        )
+    staff_fields = [
+        ("🎬 Storyboard", data.get("SB", [])),
+        ("🎞️ Episode Director", data.get("ED", [])),
+        ("✏️ Animation Director", data.get("AD", [])),
+        ("🧩 Assistant Animation Director", data.get("Ass. AD", [])),
+        ("👑 Chief Animation Director", data.get("CAD", [])),
+        ("🎨 Character Design", data.get("CD", [])),
+        ("🔥 Key Animation", data.get("KA", [])),
+        ("🎵 Artist", data.get("Artist", [])),
+    ]
 
-    if data.get("ED"):
+    # Build field entries first so they can be distributed across
+    # multiple embeds when the whole staff list is very large.
+    prepared_fields = []
 
-        embed.add_field(
-            name="🎞️ Episode Director",
-            value=format_names(
-                data.get("ED", [])
-            ),
-            inline=False,
-        )
+    for field_name, names in staff_fields:
 
-    if data.get("AD"):
+        if not names:
+            continue
 
-        embed.add_field(
-            name="✏️ Animation Director",
-            value=format_names(
-                data.get("AD", [])
-            ),
-            inline=False,
-        )
+        value = format_names(names)
 
-    if data.get("Ass. AD"):
+        if not value:
+            continue
 
-        embed.add_field(
-            name="🧩 Assistant Animation Director",
-            value=format_names(
-                data.get("Ass. AD", [])
-            ),
-            inline=False,
-        )
+        chunks = split_text(value, 1024)
 
-    if data.get("CAD"):
+        for index, chunk in enumerate(chunks):
 
-        embed.add_field(
-            name="👑 Chief Animation Director",
-            value=format_names(
-                data.get("CAD", [])
-            ),
-            inline=False,
-        )
+            if index == 0:
+                current_name = field_name
+            else:
+                current_name = f"{field_name} (continued)"
 
-    if data.get("CD"):
-
-        embed.add_field(
-            name="🎨 Character Design",
-            value=format_names(
-                data.get("CD", [])
-            ),
-            inline=False,
-        )
-
-    if data.get("KA"):
-
-        embed.add_field(
-            name="🔥 Key Animation",
-            value=format_names(
-                data.get("KA", [])
-            ),
-            inline=False,
-        )
+            prepared_fields.append(
+                (current_name, chunk)
+            )
 
     if data.get("2KA"):
 
-        embed.add_field(
-            name="📝 2nd Key Animation",
-            value=f"**{data['2KA']}**",
+        prepared_fields.append(
+            (
+                "📝 2nd Key Animation",
+                f"**{data['2KA']}**",
+            )
+        )
+
+    # --------------------------------------------------------
+    # Create one or more embeds.
+    #
+    # We keep both Discord limits safe:
+    #   maximum 25 fields
+    #   maximum 6000 characters
+    # --------------------------------------------------------
+
+    embeds = []
+    current_embed = embed
+    current_field_count = 0
+    current_total_chars = len(embed.title or "") + len(embed.description or "")
+
+    for field_name, value in prepared_fields:
+
+        field_chars = len(field_name) + len(value)
+
+        # Start a new embed if adding this field would exceed
+        # either the 25-field limit or the 6000-character limit.
+        if (
+            current_field_count >= 25
+            or current_total_chars + field_chars > 5900
+        ):
+
+            current_embed.set_footer(
+                text="Sakuga Staff • KeyFrame / KFSL dataset"
+            )
+
+            embeds.append(current_embed)
+
+            current_embed = discord.Embed(
+                title=title,
+                description=(
+                    f"**{anime}** — "
+                    f"Season {season} "
+                    f"Episode {episode}"
+                ),
+                color=EMBED_COLOR,
+            )
+
+            current_field_count = 0
+            current_total_chars = (
+                len(current_embed.title or "")
+                + len(current_embed.description or "")
+            )
+
+        current_embed.add_field(
+            name=field_name[:256],
+            value=value[:1024],
             inline=False,
         )
 
-    if data.get("Artist"):
+        current_field_count += 1
+        current_total_chars += field_chars
 
-        embed.add_field(
-            name="🎵 Artist",
-            value=format_names(
-                data.get("Artist", [])
-            ),
-            inline=False,
-        )
-
-    embed.set_footer(
+    current_embed.set_footer(
         text="Sakuga Staff • KeyFrame / KFSL dataset"
     )
 
-    await interaction.followup.send(
-        embed=embed
-    )
+    embeds.append(current_embed)
+
+    # --------------------------------------------------------
+    # Send all pages.
+    # --------------------------------------------------------
+
+    for page_index, page_embed in enumerate(embeds):
+
+        if len(embeds) > 1:
+            page_embed.set_footer(
+                text=(
+                    "Sakuga Staff • KeyFrame / KFSL dataset"
+                    f" • Page {page_index + 1}/{len(embeds)}"
+                )
+            )
+
+        await interaction.followup.send(
+            embed=page_embed
+        )
 
 
 # ============================================================
