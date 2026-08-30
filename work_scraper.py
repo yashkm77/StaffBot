@@ -52,13 +52,14 @@ def normalize(text):
     """
     Normalize names / role names / menu names.
 
+    Preserves Unicode characters such as:
+        黄成希
+
     Examples:
-
-        Keiichiro Watanabe
-        -> keiichirou watanabe
-
-        #17 (BD)
-        -> 17 bd
+        Chengxi Huang -> chengxi huang
+        Keiichiro Watanabe -> keiichirou watanabe
+        #17 (BD) -> 17 bd
+        黄成希 -> 黄成希
     """
 
     if not text:
@@ -66,10 +67,12 @@ def normalize(text):
 
     text = str(text).lower().strip()
 
+    # Preserve Unicode letters/numbers.
     text = re.sub(
-        r"[^a-z0-9]+",
+        r"[^\w]+",
         " ",
         text,
+        flags=re.UNICODE,
     )
 
     text = " ".join(
@@ -140,9 +143,39 @@ def get_person_names(person):
     ):
         return names
 
+    def add_name(value):
+
+        if not isinstance(
+            value,
+            str,
+        ):
+            return
+
+        value = value.strip()
+
+        if not value:
+            return
+
+        normalized = normalize(
+            value
+        )
+
+        if normalized:
+            names.add(
+                normalized
+            )
+
+    # Direct name fields
     for key in (
         "en",
         "ja",
+        "jp",
+        "zh",
+        "name",
+        "romanized",
+        "romaji",
+        "japanese",
+        "chinese",
     ):
 
         value = person.get(
@@ -152,12 +185,27 @@ def get_person_names(person):
         if isinstance(
             value,
             str,
-        ) and value.strip():
+        ):
 
-            names.add(
-                normalize(value)
-            )
+            add_name(value)
 
+        elif isinstance(
+            value,
+            dict,
+        ):
+
+            for subvalue in value.values():
+
+                if isinstance(
+                    subvalue,
+                    str,
+                ):
+
+                    add_name(
+                        subvalue
+                    )
+
+    # pn container
     pn = person.get(
         "pn"
     )
@@ -167,23 +215,79 @@ def get_person_names(person):
         dict,
     ):
 
-        for key in (
-            "en",
-            "ja",
-        ):
-
-            value = pn.get(
-                key
-            )
+        for value in pn.values():
 
             if isinstance(
                 value,
                 str,
-            ) and value.strip():
+            ):
 
-                names.add(
-                    normalize(value)
-                )
+                add_name(value)
+
+            elif isinstance(
+                value,
+                dict,
+            ):
+
+                for subvalue in value.values():
+
+                    if isinstance(
+                        subvalue,
+                        str,
+                    ):
+
+                        add_name(
+                            subvalue
+                        )
+
+    # names container
+    names_container = person.get(
+        "names"
+    )
+
+    if isinstance(
+        names_container,
+        list,
+    ):
+
+        for value in names_container:
+
+            if isinstance(
+                value,
+                str,
+            ):
+
+                add_name(value)
+
+            elif isinstance(
+                value,
+                dict,
+            ):
+
+                for subvalue in value.values():
+
+                    if isinstance(
+                        subvalue,
+                        str,
+                    ):
+
+                        add_name(
+                            subvalue
+                        )
+
+    elif isinstance(
+        names_container,
+        dict,
+    ):
+
+        for value in names_container.values():
+
+            if isinstance(
+                value,
+                str,
+            ):
+
+                add_name(value)
 
     return names
 
