@@ -35,33 +35,20 @@ ROLE_NAMES = {
 
 
 # ============================================================
-# NAME ALIASES
-#
-# Important:
-# Chengxi Huang is 黄成希.
-#
-# KFSL may use:
-#   Chengxi Huang
-#   Huang Chengxi
-#   黄成希
-#
-# All of these are treated as the same person.
+# PERSON ALIASES
 # ============================================================
 
 NAME_ALIASES = {
 
-    # --------------------------------------------------------
     # Chengxi Huang
-    # --------------------------------------------------------
-
     "chengxi huang": "chengxi huang",
     "huang chengxi": "chengxi huang",
+
+    # Chinese
     "黄成希": "chengxi huang",
+    "成希": "chengxi huang",
 
-    # --------------------------------------------------------
     # Other known aliases
-    # --------------------------------------------------------
-
     "keiichiro watanabe": "keiichirou watanabe",
     "keiichirou watanabe": "keiichirou watanabe",
 
@@ -71,12 +58,7 @@ NAME_ALIASES = {
 
 
 # ============================================================
-# EXTRA NAME ALIASES
-#
-# Used when searching.
-#
-# This is intentionally separate from NAME_ALIASES so one
-# normalized person can have several accepted spellings.
+# SEARCH ALIASES
 # ============================================================
 
 PERSON_SEARCH_ALIASES = {
@@ -108,16 +90,17 @@ def normalize(text):
     if text is None:
         return ""
 
-    text = str(text).strip().lower()
+    if not isinstance(text, str):
+        text = str(text)
+
+    text = html_module.unescape(text)
+
+    text = text.strip().lower()
 
     if not text:
         return ""
 
-    # Preserve Unicode letters such as:
-    #
-    # 黄成希
-    # 進撃の巨人
-    #
+    # Replace punctuation with spaces.
     text = re.sub(
         r"[^\w]+",
         " ",
@@ -130,6 +113,30 @@ def normalize(text):
     return NAME_ALIASES.get(
         text,
         text,
+    )
+
+
+# ============================================================
+# COMPACT NAME
+#
+# Chengxi Huang
+# Chengxi-Huang
+# Chengxi_Huang
+#
+# all become:
+#
+# chengxihuang
+# ============================================================
+
+def compact_name(text):
+
+    normalized = normalize(text)
+
+    return re.sub(
+        r"[^\w]",
+        "",
+        normalized,
+        flags=re.UNICODE,
     )
 
 
@@ -147,25 +154,250 @@ def get_search_names(animator):
         names.add(normalized)
 
     aliases = PERSON_SEARCH_ALIASES.get(
-        normalized
+        normalized,
+        set(),
     )
 
-    if aliases:
-        for alias in aliases:
+    for alias in aliases:
+
+        normalized_alias = normalize(
+            alias
+        )
+
+        if normalized_alias:
             names.add(
-                normalize(alias)
+                normalized_alias
             )
 
     return names
 
 
 # ============================================================
-# PERSON NAME MATCH
+# GET SEARCH COMPACT NAMES
 # ============================================================
 
-def person_matches(person, animator):
+def get_search_compact_names(animator):
+
+    names = get_search_names(
+        animator
+    )
+
+    compact = set()
+
+    for name in names:
+
+        value = compact_name(
+            name
+        )
+
+        if value:
+            compact.add(
+                value
+            )
+
+    return compact
+
+
+# ============================================================
+# ADD NAME VALUE
+# ============================================================
+
+def add_name_value(
+    names,
+    value,
+):
+
+    if value is None:
+        return
+
+    # String
+    if isinstance(
+        value,
+        str,
+    ):
+
+        value = value.strip()
+
+        if not value:
+            return
+
+        normalized = normalize(
+            value
+        )
+
+        if normalized:
+            names.add(
+                normalized
+            )
+
+        return
+
+    # List / tuple / set
+    if isinstance(
+        value,
+        (list, tuple, set),
+    ):
+
+        for item in value:
+
+            add_name_value(
+                names,
+                item,
+            )
+
+        return
+
+    # Dictionary
+    if isinstance(
+        value,
+        dict,
+    ):
+
+        for nested_value in value.values():
+
+            add_name_value(
+                names,
+                nested_value,
+            )
+
+
+# ============================================================
+# PERSON NAMES
+#
+# This is intentionally recursive.
+#
+# KFSL data can have names inside:
+#
+# en
+# ja
+# zh
+# pn
+# names
+# name
+# romanized
+# etc.
+# ============================================================
+
+def get_person_names(person):
+
+    names = set()
+
+    if not isinstance(
+        person,
+        dict,
+    ):
+        return names
+
+    direct_fields = (
+
+        "en",
+        "ja",
+        "jp",
+        "zh",
+
+        "name",
+
+        "romanized",
+        "romaji",
+
+        "japanese",
+        "chinese",
+        "english",
+
+        "original",
+
+        "displayName",
+        "display_name",
+
+        "fullName",
+        "full_name",
+
+        "nameEn",
+        "name_en",
+
+        "nameJa",
+        "name_ja",
+
+        "nameZh",
+        "name_zh",
+    )
+
+    for key in direct_fields:
+
+        if key in person:
+
+            add_name_value(
+                names,
+                person.get(key),
+            )
+
+    # pn
+    pn = person.get(
+        "pn"
+    )
+
+    if pn is not None:
+
+        add_name_value(
+            names,
+            pn,
+        )
+
+    # names
+    names_container = person.get(
+        "names"
+    )
+
+    if names_container is not None:
+
+        add_name_value(
+            names,
+            names_container,
+        )
+
+    return names
+
+
+# ============================================================
+# GET COMPACT PERSON NAMES
+# ============================================================
+
+def get_person_compact_names(person):
+
+    names = get_person_names(
+        person
+    )
+
+    compact = set()
+
+    for name in names:
+
+        value = compact_name(
+            name
+        )
+
+        if value:
+            compact.add(
+                value
+            )
+
+    return compact
+
+
+# ============================================================
+# PERSON MATCH
+# ============================================================
+
+def person_matches(
+    person,
+    animator,
+):
 
     target_names = get_search_names(
+        animator
+    )
+
+    target_compact = get_search_compact_names(
         animator
     )
 
@@ -176,14 +408,49 @@ def person_matches(person, animator):
         person
     )
 
-    if not person_names:
-        return False
-
-    return bool(
-        target_names.intersection(
-            person_names
-        )
+    person_compact = get_person_compact_names(
+        person
     )
+
+    # --------------------------------------------------------
+    # Exact normalized match
+    # --------------------------------------------------------
+
+    if target_names.intersection(
+        person_names
+    ):
+
+        return True
+
+    # --------------------------------------------------------
+    # Compact match
+    # --------------------------------------------------------
+
+    if target_compact.intersection(
+        person_compact
+    ):
+
+        return True
+
+    # --------------------------------------------------------
+    # Chengxi Huang special case
+    #
+    # This allows the Chinese name to be matched even if
+    # KFSL exposes only the Chinese form.
+    # --------------------------------------------------------
+
+    if normalize(animator) == "chengxi huang":
+
+        for name in person_names:
+
+            if name in (
+                "黄成希",
+                "成希",
+            ):
+
+                return True
+
+    return False
 
 
 # ============================================================
@@ -198,6 +465,7 @@ def load_local_json(slug):
     )
 
     if not os.path.exists(path):
+
         return None
 
     print(
@@ -228,206 +496,6 @@ def load_local_json(slug):
 
 
 # ============================================================
-# PERSON NAMES
-# ============================================================
-
-def get_person_names(person):
-
-    names = set()
-
-    if not isinstance(
-        person,
-        dict,
-    ):
-        return names
-
-    def add_name(value):
-
-        if not isinstance(
-            value,
-            str,
-        ):
-            return
-
-        value = value.strip()
-
-        if not value:
-            return
-
-        normalized = normalize(
-            value
-        )
-
-        if normalized:
-            names.add(
-                normalized
-            )
-
-    # --------------------------------------------------------
-    # Direct fields
-    # --------------------------------------------------------
-
-    direct_fields = (
-        "en",
-        "ja",
-        "jp",
-        "zh",
-        "name",
-        "romanized",
-        "romaji",
-        "japanese",
-        "chinese",
-        "english",
-        "original",
-    )
-
-    for key in direct_fields:
-
-        value = person.get(
-            key
-        )
-
-        if isinstance(
-            value,
-            str,
-        ):
-
-            add_name(
-                value
-            )
-
-        elif isinstance(
-            value,
-            dict,
-        ):
-
-            for subvalue in value.values():
-
-                if isinstance(
-                    subvalue,
-                    str,
-                ):
-
-                    add_name(
-                        subvalue
-                    )
-
-    # --------------------------------------------------------
-    # pn container
-    # --------------------------------------------------------
-
-    pn = person.get(
-        "pn"
-    )
-
-    if isinstance(
-        pn,
-        dict,
-    ):
-
-        for value in pn.values():
-
-            if isinstance(
-                value,
-                str,
-            ):
-
-                add_name(
-                    value
-                )
-
-            elif isinstance(
-                value,
-                dict,
-            ):
-
-                for subvalue in value.values():
-
-                    if isinstance(
-                        subvalue,
-                        str,
-                    ):
-
-                        add_name(
-                            subvalue
-                        )
-
-    # --------------------------------------------------------
-    # names container
-    # --------------------------------------------------------
-
-    names_container = person.get(
-        "names"
-    )
-
-    if isinstance(
-        names_container,
-        list,
-    ):
-
-        for value in names_container:
-
-            if isinstance(
-                value,
-                str,
-            ):
-
-                add_name(
-                    value
-                )
-
-            elif isinstance(
-                value,
-                dict,
-            ):
-
-                for subvalue in value.values():
-
-                    if isinstance(
-                        subvalue,
-                        str,
-                    ):
-
-                        add_name(
-                            subvalue
-                        )
-
-    elif isinstance(
-        names_container,
-        dict,
-    ):
-
-        for value in names_container.values():
-
-            if isinstance(
-                value,
-                str,
-            ):
-
-                add_name(
-                    value
-                )
-
-            elif isinstance(
-                value,
-                dict,
-            ):
-
-                for subvalue in value.values():
-
-                    if isinstance(
-                        subvalue,
-                        str,
-                    ):
-
-                        add_name(
-                            subvalue
-                        )
-
-    return names
-
-
-# ============================================================
 # GET MAIN NAME
 # ============================================================
 
@@ -438,6 +506,10 @@ def get_main_name(person):
         dict,
     ):
         return ""
+
+    # --------------------------------------------------------
+    # pn
+    # --------------------------------------------------------
 
     pn = person.get(
         "pn"
@@ -452,6 +524,7 @@ def get_main_name(person):
             "en",
             "english",
             "romanized",
+            "romaji",
         ):
 
             value = pn.get(
@@ -464,6 +537,10 @@ def get_main_name(person):
             ) and value.strip():
 
                 return value.strip()
+
+    # --------------------------------------------------------
+    # Direct English fields
+    # --------------------------------------------------------
 
     for key in (
         "en",
@@ -484,6 +561,37 @@ def get_main_name(person):
         ) and value.strip():
 
             return value.strip()
+
+    # --------------------------------------------------------
+    # Search names container
+    # --------------------------------------------------------
+
+    names = person.get(
+        "names"
+    )
+
+    if isinstance(
+        names,
+        dict,
+    ):
+
+        for key in (
+            "en",
+            "english",
+            "romanized",
+            "romaji",
+        ):
+
+            value = names.get(
+                key
+            )
+
+            if isinstance(
+                value,
+                str,
+            ) and value.strip():
+
+                return value.strip()
 
     return ""
 
@@ -526,6 +634,7 @@ def find_person_id(
                 )
 
                 if result:
+
                     return result
 
         elif isinstance(
@@ -540,11 +649,14 @@ def find_person_id(
                 )
 
                 if result:
+
                     return result
 
         return None
 
-    return walk(data)
+    return walk(
+        data
+    )
 
 
 # ============================================================
@@ -621,6 +733,7 @@ def get_work_label(menu_name):
 def get_work_type(menu_name):
 
     if not menu_name:
+
         return "OTHER"
 
     text = str(
@@ -647,8 +760,7 @@ def get_work_type(menu_name):
 
         return "ED"
 
-    # Anything containing a number is treated
-    # as an episode/work entry.
+    # Anything containing a number
     if re.search(
         r"\d+",
         normalized,
@@ -696,6 +808,7 @@ def get_episode_number(menu_name):
     )
 
     if not match:
+
         return None
 
     try:
@@ -721,16 +834,13 @@ def get_episode_data(data):
         data,
         dict,
     ):
+
         return episodes
 
     menus = data.get(
         "menus",
         [],
     )
-
-    # --------------------------------------------------------
-    # Some KFSL JSON variants may use another container.
-    # --------------------------------------------------------
 
     if not isinstance(
         menus,
@@ -746,6 +856,7 @@ def get_episode_data(data):
         menus,
         list,
     ):
+
         return episodes
 
     for menu in menus:
@@ -754,6 +865,7 @@ def get_episode_data(data):
             menu,
             dict,
         ):
+
             continue
 
         menu_name = str(
@@ -767,6 +879,7 @@ def get_episode_data(data):
         ).strip()
 
         if not menu_name:
+
             continue
 
         credits = menu.get(
@@ -787,6 +900,7 @@ def get_episode_data(data):
             credits,
             list,
         ):
+
             continue
 
         work_type = get_work_type(
@@ -794,6 +908,7 @@ def get_episode_data(data):
         )
 
         if work_type == "OTHER":
+
             continue
 
         episode_number = get_episode_number(
@@ -816,17 +931,18 @@ def get_episode_data(data):
 
         })
 
-    # --------------------------------------------------------
-    # Remove duplicate menu entries
-    # --------------------------------------------------------
-
+    # Remove duplicate menus
     unique = {}
 
     for episode in episodes:
 
         key = (
-            episode.get("work_name"),
-            episode.get("work_type"),
+            episode.get(
+                "work_name"
+            ),
+            episode.get(
+                "work_type"
+            ),
         )
 
         unique[key] = episode
@@ -835,10 +951,7 @@ def get_episode_data(data):
         unique.values()
     )
 
-    # --------------------------------------------------------
-    # SORT
-    # --------------------------------------------------------
-
+    # Sort
     def sort_key(item):
 
         work_type = item.get(
@@ -850,15 +963,19 @@ def get_episode_data(data):
         )
 
         if work_type == "OP":
+
             priority = 0
 
         elif work_type == "EPISODE":
+
             priority = 1
 
         elif work_type == "ED":
+
             priority = 2
 
         else:
+
             priority = 3
 
         return (
@@ -886,6 +1003,7 @@ def get_episode_data(data):
 def normalize_role_name(role_name):
 
     if not role_name:
+
         return ""
 
     text = str(
@@ -896,10 +1014,7 @@ def normalize_role_name(role_name):
         text
     )
 
-    # --------------------------------------------------------
     # Key Animation
-    # --------------------------------------------------------
-
     if normalized in (
         "key animation",
         "key animator",
@@ -908,10 +1023,7 @@ def normalize_role_name(role_name):
 
         return "Key Animation"
 
-    # --------------------------------------------------------
     # 2nd Key Animation
-    # --------------------------------------------------------
-
     if normalized in (
         "2nd key animation",
         "second key animation",
@@ -922,10 +1034,7 @@ def normalize_role_name(role_name):
 
         return "2nd Key Animation"
 
-    # --------------------------------------------------------
     # Storyboard
-    # --------------------------------------------------------
-
     if normalized in (
         "storyboard",
         "story board",
@@ -933,10 +1042,7 @@ def normalize_role_name(role_name):
 
         return "Storyboard"
 
-    # --------------------------------------------------------
     # Episode Director
-    # --------------------------------------------------------
-
     if normalized in (
         "episode director",
         "episode director ed",
@@ -944,23 +1050,16 @@ def normalize_role_name(role_name):
 
         return "Episode Director"
 
-    # --------------------------------------------------------
     # Storyboard / Episode Director
-    # --------------------------------------------------------
-
     if normalized in (
         "storyboard episode director",
         "storyboard episode director ed",
-        "storyboard episode director sb ed",
         "storyboard episode director sb ed",
     ):
 
         return "Storyboard / Episode Director"
 
-    # --------------------------------------------------------
     # Animation Director
-    # --------------------------------------------------------
-
     if normalized in (
         "animation director",
         "animation director ad",
@@ -968,23 +1067,16 @@ def normalize_role_name(role_name):
 
         return "Animation Director"
 
-    # --------------------------------------------------------
     # Assistant Animation Director
-    # --------------------------------------------------------
-
     if normalized in (
         "assistant animation director",
         "assistant animation director aad",
         "assistant animation director ass ad",
-        "assistant animation director aad",
     ):
 
         return "Assistant Animation Director"
 
-    # --------------------------------------------------------
     # Chief Animation Director
-    # --------------------------------------------------------
-
     if normalized in (
         "chief animation director",
         "chief animation director cad",
@@ -992,10 +1084,7 @@ def normalize_role_name(role_name):
 
         return "Chief Animation Director"
 
-    # --------------------------------------------------------
     # Character Design
-    # --------------------------------------------------------
-
     if normalized in (
         "character design",
         "character designer",
@@ -1003,10 +1092,7 @@ def normalize_role_name(role_name):
 
         return "Character Design"
 
-    # --------------------------------------------------------
     # Art Director
-    # --------------------------------------------------------
-
     if normalized in (
         "art director",
         "art director ad",
@@ -1014,10 +1100,7 @@ def normalize_role_name(role_name):
 
         return "Art Director"
 
-    # --------------------------------------------------------
     # Art Board
-    # --------------------------------------------------------
-
     if normalized in (
         "art board",
         "artboard",
@@ -1025,10 +1108,7 @@ def normalize_role_name(role_name):
 
         return "Art Board"
 
-    # --------------------------------------------------------
     # Main Animator
-    # --------------------------------------------------------
-
     if normalized in (
         "main animator",
         "main animation",
@@ -1056,17 +1136,7 @@ def get_role_display_name(role):
 
 
 # ============================================================
-# EXTRACT PEOPLE FROM CREDIT
-#
-# Handles:
-#
-# staff: [...]
-# staff: {...}
-# person: {...}
-# people: [...]
-#
-# This makes the parser less dependent on one exact KFSL
-# JSON shape.
+# EXTRACT PEOPLE
 # ============================================================
 
 def extract_people(value):
@@ -1085,9 +1155,28 @@ def extract_people(value):
                 dict,
             ):
 
-                people.append(
-                    item
-                )
+                # A person object
+                if (
+                    "id" in item
+                    or "pn" in item
+                    or "names" in item
+                    or "en" in item
+                    or "name" in item
+                    or "ja" in item
+                    or "zh" in item
+                ):
+
+                    people.append(
+                        item
+                    )
+
+                else:
+
+                    people.extend(
+                        extract_people(
+                            item
+                        )
+                    )
 
             elif isinstance(
                 item,
@@ -1095,7 +1184,9 @@ def extract_people(value):
             ):
 
                 people.extend(
-                    extract_people(item)
+                    extract_people(
+                        item
+                    )
                 )
 
     elif isinstance(
@@ -1103,28 +1194,24 @@ def extract_people(value):
         dict,
     ):
 
-        # ----------------------------------------------------
-        # A direct person object
-        # ----------------------------------------------------
-
+        # Direct person object
         if (
-            "en" in value
-            or "ja" in value
-            or "zh" in value
-            or "name" in value
+            "id" in value
             or "pn" in value
             or "names" in value
-            or "id" in value
+            or "en" in value
+            or "name" in value
+            or "ja" in value
+            or "zh" in value
         ):
 
             people.append(
                 value
             )
 
-        # ----------------------------------------------------
-        # Otherwise search nested containers
-        # ----------------------------------------------------
+            return people
 
+        # Nested containers
         for key in (
             "staff",
             "people",
@@ -1141,7 +1228,9 @@ def extract_people(value):
             if nested is not None:
 
                 people.extend(
-                    extract_people(nested)
+                    extract_people(
+                        nested
+                    )
                 )
 
     return people
@@ -1167,6 +1256,7 @@ def search_episode(
         credits,
         list,
     ):
+
         return results
 
     for credit_group in credits:
@@ -1175,26 +1265,22 @@ def search_episode(
             credit_group,
             dict,
         ):
-            continue
 
-        # ----------------------------------------------------
-        # Normal KFSL structure:
-        #
-        # {
-        #   "roles": [...]
-        # }
-        # ----------------------------------------------------
+            continue
 
         roles = credit_group.get(
             "roles"
         )
+
+        # ----------------------------------------------------
+        # Alternative structure
+        # ----------------------------------------------------
 
         if not isinstance(
             roles,
             list,
         ):
 
-            # Some structures may have one role directly.
             if (
                 "name" in credit_group
                 and (
@@ -1218,6 +1304,7 @@ def search_episode(
                 role,
                 dict,
             ):
+
                 continue
 
             role_name = str(
@@ -1231,15 +1318,12 @@ def search_episode(
             ).strip()
 
             if not role_name:
+
                 continue
 
             canonical_role = normalize_role_name(
                 role_name
             )
-
-            # ------------------------------------------------
-            # Extract staff from every common field
-            # ------------------------------------------------
 
             people = []
 
@@ -1265,7 +1349,7 @@ def search_episode(
                     )
 
             # ------------------------------------------------
-            # Remove duplicate person objects
+            # Remove duplicates
             # ------------------------------------------------
 
             unique_people = []
@@ -1299,6 +1383,7 @@ def search_episode(
                     )
 
                 if person_key in seen_persons:
+
                     continue
 
                 seen_persons.add(
@@ -1310,7 +1395,7 @@ def search_episode(
                 )
 
             # ------------------------------------------------
-            # Search people
+            # Search
             # ------------------------------------------------
 
             for person in unique_people:
@@ -1319,32 +1404,24 @@ def search_episode(
                 if person.get(
                     "isStudio"
                 ):
+
                     continue
 
                 if person.get(
                     "is_studio"
                 ):
-                    continue
 
-                # ------------------------------------------------
-                # THIS IS THE IMPORTANT FIX
-                #
-                # Search all accepted names:
-                #
-                # Chengxi Huang
-                # Huang Chengxi
-                # 黄成希
-                # ------------------------------------------------
+                    continue
 
                 if not person_matches(
                     person,
                     animator,
                 ):
+
                     continue
 
                 displayed_name = ""
 
-                # Prefer English name
                 for key in (
                     "en",
                     "english",
@@ -1363,6 +1440,7 @@ def search_episode(
                     ) and value.strip():
 
                         displayed_name = value.strip()
+
                         break
 
                 if not displayed_name:
@@ -1370,6 +1448,10 @@ def search_episode(
                     displayed_name = get_main_name(
                         person
                     )
+
+                if not displayed_name:
+
+                    displayed_name = animator
 
                 results.append({
 
@@ -1515,7 +1597,6 @@ def get_headers():
         "Cache-Control": "no-cache",
 
         "Pragma": "no-cache",
-
     }
 
 
@@ -1594,6 +1675,7 @@ async def get_staff_profile(
 ):
 
     if person_id is None:
+
         return None
 
     person_id = str(
@@ -1601,6 +1683,7 @@ async def get_staff_profile(
     ).strip()
 
     if not person_id:
+
         return None
 
     possible_urls = [
@@ -1608,7 +1691,6 @@ async def get_staff_profile(
         f"{BASE_URL}/{person_id}",
 
         f"{BASE_URL}?id={person_id}",
-
     ]
 
     for url in possible_urls:
@@ -1621,6 +1703,7 @@ async def get_staff_profile(
             ) as response:
 
                 if response.status != 200:
+
                     continue
 
                 text = await response.text(
@@ -1686,6 +1769,7 @@ def build_grouped_works(results):
         )
 
         if not role:
+
             continue
 
         role = normalize_role_name(
@@ -1726,6 +1810,7 @@ def build_grouped_works(results):
                 continue
 
         if work_name in seen[role]:
+
             continue
 
         seen[role].add(
@@ -1755,7 +1840,7 @@ def sort_work_names(work_names):
             text
         )
 
-        # OP before normal episode
+        # OP
         op_match = re.fullmatch(
             r"op\s*(?:#\s*)?(\d+)",
             normalized,
@@ -1771,29 +1856,26 @@ def sort_work_names(work_names):
                 text.lower(),
             )
 
-        # ED
-        ed_match = re.fullmatch(
-            r"ed\s*(?:#\s*)?(\d+)",
-            normalized,
-        )
-
-        if ed_match:
-
-            return (
-                2,
-                int(
-                    ed_match.group(1)
-                ),
-                text.lower(),
-            )
-
-        # Normal episode
+        # Episode
         match = re.search(
             r"\d+",
             text,
         )
 
         if match:
+
+            # ED goes after episodes
+            if normalized.startswith(
+                "ed "
+            ):
+
+                return (
+                    2,
+                    int(
+                        match.group(0)
+                    ),
+                    text.lower(),
+                )
 
             return (
                 1,
@@ -1864,30 +1946,15 @@ async def get_animator_works(
         if not results:
 
             # ------------------------------------------------
-            # DEBUG NAME SEARCH
-            #
-            # This tells you what names were actually present
-            # if Chengxi Huang still fails.
+            # Chengxi debug
             # ------------------------------------------------
 
             if normalize(animator) == "chengxi huang":
 
-                print(
-                    "DEBUG: Chengxi Huang was not found "
-                    "in the staff credits."
+                debug_animator_in_json(
+                    data,
+                    animator,
                 )
-
-                print(
-                    "Accepted names:"
-                )
-
-                for name in sorted(
-                    get_search_names(animator)
-                ):
-
-                    print(
-                        f"  - {name}"
-                    )
 
             return {
 
@@ -1904,7 +1971,6 @@ async def get_animator_works(
                 "found": False,
 
                 "source": "local",
-
             }
 
         person_id = results[0].get(
@@ -1974,7 +2040,6 @@ async def get_animator_works(
             "found": True,
 
             "source": "local",
-
         }
 
     # ========================================================
@@ -2024,7 +2089,6 @@ async def get_animator_works(
                 "found": False,
 
                 "source": "unavailable",
-
             }
 
         data = extract_staff_list_data(
@@ -2048,7 +2112,6 @@ async def get_animator_works(
                 "found": False,
 
                 "source": "unavailable",
-
             }
 
         results = search_local_json(
@@ -2058,7 +2121,18 @@ async def get_animator_works(
             animator,
         )
 
+        print(
+            f"Matches found: {len(results)}"
+        )
+
         if not results:
+
+            if normalize(animator) == "chengxi huang":
+
+                debug_animator_in_json(
+                    data,
+                    animator,
+                )
 
             return {
 
@@ -2075,7 +2149,6 @@ async def get_animator_works(
                 "found": False,
 
                 "source": "runtime",
-
             }
 
         grouped = build_grouped_works(
@@ -2124,7 +2197,6 @@ async def get_animator_works(
             "found": True,
 
             "source": "runtime",
-
         }
 
 
@@ -2142,6 +2214,7 @@ def deduplicate_anime_list(anime_list):
             item,
             dict,
         ):
+
             continue
 
         slug = str(
@@ -2152,9 +2225,9 @@ def deduplicate_anime_list(anime_list):
         ).strip()
 
         if not slug:
+
             continue
 
-        # Keep first occurrence
         if slug not in unique:
 
             unique[slug] = {
@@ -2164,7 +2237,6 @@ def deduplicate_anime_list(anime_list):
                 "title": item.get(
                     "title"
                 ) or slug,
-
             }
 
     return list(
@@ -2181,28 +2253,10 @@ async def get_animator_works_all(
     anime_list,
 ):
 
-    """
-    Check multiple anime/season slugs.
-
-    Duplicate slugs are automatically removed.
-
-    Example:
-
-        [
-            {
-                "slug": "shingeki-no-kyojin",
-                "title": "Attack on Titan"
-            },
-            {
-                "slug": "shingeki-no-kyojin-season-2",
-                "title": "Attack on Titan Season 2"
-            }
-        ]
-    """
-
     results = []
 
     if not anime_list:
+
         return results
 
     anime_list = deduplicate_anime_list(
@@ -2210,7 +2264,8 @@ async def get_animator_works_all(
     )
 
     print(
-        f"Unique anime entries: {len(anime_list)}"
+        f"Unique anime entries: "
+        f"{len(anime_list)}"
     )
 
     for item in anime_list:
@@ -2224,6 +2279,7 @@ async def get_animator_works_all(
         )
 
         if not slug:
+
             continue
 
         print()
@@ -2270,7 +2326,6 @@ async def get_animator_works_all(
                 "found": False,
 
                 "source": "unavailable",
-
             }
 
         if (
@@ -2306,7 +2361,9 @@ def format_groups(groups):
 
         for work in works:
 
-            if work not in formatted[display_role]:
+            if work not in formatted[
+                display_role
+            ]:
 
                 formatted[
                     display_role
@@ -2324,15 +2381,7 @@ def format_groups(groups):
 
 
 # ============================================================
-# DEBUG ONE JSON
-#
-# Useful if Chengxi Huang still returns nothing.
-# It prints every matching name containing:
-#
-# cheng
-# huang
-# 黄
-#
+# DEBUG ANIMATOR
 # ============================================================
 
 def debug_animator_in_json(
@@ -2344,21 +2393,52 @@ def debug_animator_in_json(
         animator
     )
 
+    target_compact = get_search_compact_names(
+        animator
+    )
+
     print()
     print(
         "=" * 70
     )
+
     print(
         f"DEBUG SEARCH: {animator}"
     )
+
     print(
-        f"Accepted normalized names: {sorted(target_names)}"
+        "Accepted names:"
     )
+
+    for name in sorted(
+        target_names
+    ):
+
+        print(
+            f"  - {name}"
+        )
+
+    print(
+        "Accepted compact names:"
+    )
+
+    for name in sorted(
+        target_compact
+    ):
+
+        print(
+            f"  - {name}"
+        )
+
     print(
         "=" * 70
     )
 
-    found_people = []
+    exact_people = []
+
+    possible_people = []
+
+    visited = set()
 
     def walk(obj):
 
@@ -2367,36 +2447,60 @@ def debug_animator_in_json(
             dict,
         ):
 
+            # Prevent repeated references
+            object_id = id(
+                obj
+            )
+
+            if object_id in visited:
+
+                return
+
+            visited.add(
+                object_id
+            )
+
             names = get_person_names(
                 obj
             )
 
             if names:
 
-                # Exact match
-                if names.intersection(
-                    target_names
+                compact = {
+                    compact_name(name)
+                    for name in names
+                }
+
+                if (
+                    target_names.intersection(
+                        names
+                    )
+                    or target_compact.intersection(
+                        compact
+                    )
                 ):
 
-                    found_people.append(
+                    exact_people.append(
                         obj
                     )
 
-                # Partial debug match
-                elif any(
-                    (
-                        "chengxi" in name
-                        or "huang" in name
-                        or "黄" in name
-                        or "成希" in name
-                    )
-                    for name in names
-                ):
+                else:
 
-                    print(
-                        "Possible person:",
-                        sorted(names)
-                    )
+                    # Useful partial debugging
+                    joined = " ".join(
+                        names
+                    ).lower()
+
+                    if (
+                        "cheng" in joined
+                        or "huang" in joined
+                        or "成希" in joined
+                        or "黄" in joined
+                    ):
+
+                        possible_people.append(
+                            obj
+                        )
 
             for value in obj.values():
 
@@ -2411,14 +2515,41 @@ def debug_animator_in_json(
 
                 walk(value)
 
-    walk(data)
+    walk(
+        data
+    )
 
     print()
     print(
-        f"EXACT PEOPLE FOUND: {len(found_people)}"
+        f"EXACT PEOPLE FOUND: "
+        f"{len(exact_people)}"
     )
 
-    for person in found_people:
+    for person in exact_people:
+
+        print(
+            "Names:",
+            sorted(
+                get_person_names(
+                    person
+                )
+            )
+        )
+
+        print(
+            "ID:",
+            person.get(
+                "id"
+            )
+        )
+
+    print()
+    print(
+        f"POSSIBLE PEOPLE FOUND: "
+        f"{len(possible_people)}"
+    )
+
+    for person in possible_people:
 
         print(
             "Names:",
@@ -2446,10 +2577,6 @@ def debug_animator_in_json(
 # ============================================================
 
 async def test():
-
-    # --------------------------------------------------------
-    # CHANGE THIS TO TEST ANIMATOR
-    # --------------------------------------------------------
 
     animator = "Chengxi Huang"
 
@@ -2504,7 +2631,6 @@ async def test():
             "slug": "shingeki-no-kyojin-ova",
             "title": "Attack on Titan OVA",
         },
-
     ]
 
     print()
@@ -2535,12 +2661,28 @@ async def test():
     )
 
     print(
-        f"FOUND WORKS IN {len(results)} ANIME ENTRIES"
+        f"FOUND WORKS IN "
+        f"{len(results)} ANIME ENTRIES"
     )
 
     print(
         "=" * 70
     )
+
+    if not results:
+
+        print()
+        print(
+            f"No work found for {animator} "
+            f"in the detected anime seasons."
+        )
+
+        print()
+        print(
+            "If local JSON files were used, "
+            "the DEBUG output above shows which "
+            "Chengxi/Huang names are actually present."
+        )
 
     for result in results:
 
@@ -2564,6 +2706,15 @@ async def test():
                 )
             )
 
+        if result.get(
+            "profile_url"
+        ):
+
+            print(
+                f"Profile: "
+                f"{result['profile_url']}"
+            )
+
     print()
     print(
         "=" * 70
@@ -2579,4 +2730,3 @@ if __name__ == "__main__":
     asyncio.run(
         test()
     )
-
