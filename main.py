@@ -490,23 +490,7 @@ FRANCHISES = {
         "include_non_main": True,
     },
 
-    # --------------------------------------------------------
-# AOT: automatically include ALL Attack on Titan entries
-# including seasons, OVAs, movies, specials, etc.
-# --------------------------------------------------------
-
-if normalized_input in (
-    "aot",
-    "attack on titan",
-    "shingeki no kyojin",
-):
-
-    aot_keywords = [
-        "attack on titan",
-        "attack-on-titan",
-        "shingeki no kyojin",
-        "shingeki-no-kyojin",
-    ]
+}
 
     # ----------------------------------------------------
     # Search anime_index.json
@@ -659,37 +643,27 @@ def get_entry_type(slug):
 
 
 # ============================================================
-# GET ALL ANIME SEASONS / MOVIES
+# GET ALL ANIME SEASONS / WORKS
 # ============================================================
 
 def get_all_anime_seasons(anime):
-
     """
-    Find ALL KFSL entries belonging to an anime franchise.
+    Find all relevant KFSL entries for an anime/franchise.
 
-    This includes:
+    For AOT this includes:
+        - Main seasons
+        - Final Season parts
+        - OVAs
+        - Movies
+        - Specials
+        - Other AOT-related KFSL entries
 
-        Seasons
-        Parts
-        Movies
-        OVAs
-        Specials
-
-    Example:
-
-        /work aot animator
-
-    searches every matching Attack on Titan KFSL entry.
-
-    IMPORTANT:
-
-    Movies/specials are NOT displayed unless the animator
-    actually has a credit in that entry.
+    The actual animator credit is checked later by
+    get_animator_works_all(), so entries where the animator
+    has no credit will simply be ignored.
     """
 
-    normalized_input = normalize(
-        anime
-    )
+    normalized_input = normalize(anime)
 
     if not normalized_input:
         return []
@@ -705,32 +679,150 @@ def get_all_anime_seasons(anime):
     )
 
     # ========================================================
-    # HELPER
+    # ADD CANDIDATE
     # ========================================================
 
-    def add_candidate(slug, allow_non_main=False):
+    def add_candidate(
+        slug,
+        allow_non_main=False,
+    ):
 
-    if not slug:
-        return
+        if not slug:
+            return
 
-    slug = str(slug).strip()
+        slug = str(slug).strip()
 
-    if not slug:
-        return
+        if not slug:
+            return
 
-    # --------------------------------------------------------
-    # Exclude movies / OVAs / specials by default.
-    #
-    # If allow_non_main=True, include them.
-    # --------------------------------------------------------
+        # ----------------------------------------------------
+        # Normally exclude movies / OVAs / specials.
+        #
+        # AOT explicitly allows them.
+        # ----------------------------------------------------
 
-    if is_non_main_entry(slug) and not allow_non_main:
-        return
+        if (
+            is_non_main_entry(slug)
+            and not allow_non_main
+        ):
+            return
 
-    candidates[slug] = True
+        candidates[slug] = True
 
     # ========================================================
-    # SPECIFIC SEASON NUMBER
+    # AOT SPECIAL HANDLING
+    # ========================================================
+
+    is_aot = normalized_input in (
+        "aot",
+        "attack on titan",
+        "shingeki no kyojin",
+    )
+
+    if is_aot:
+
+        aot_keywords = [
+            "attack on titan",
+            "attack-on-titan",
+            "shingeki no kyojin",
+            "shingeki-no-kyojin",
+        ]
+
+        # ----------------------------------------------------
+        # A. Search anime_index.json
+        # ----------------------------------------------------
+
+        for name, slug in ANIME_INDEX.items():
+
+            normalized_name = normalize(name)
+            normalized_slug = normalize(slug)
+
+            if (
+                not normalized_name
+                and not normalized_slug
+            ):
+                continue
+
+            matched = False
+
+            for keyword in aot_keywords:
+
+                keyword_normalized = normalize(
+                    keyword
+                )
+
+                if (
+                    keyword_normalized
+                    in normalized_name
+                    or keyword_normalized
+                    in normalized_slug
+                ):
+
+                    matched = True
+                    break
+
+            if matched:
+
+                add_candidate(
+                    slug,
+                    allow_non_main=True,
+                )
+
+        # ----------------------------------------------------
+        # B. Search ALL local KFSL JSON files
+        # ----------------------------------------------------
+
+        for slug in get_local_anime_slugs():
+
+            normalized_slug = normalize(
+                slug
+            )
+
+            if not normalized_slug:
+                continue
+
+            matched = False
+
+            for keyword in aot_keywords:
+
+                keyword_normalized = normalize(
+                    keyword
+                )
+
+                if keyword_normalized in normalized_slug:
+
+                    matched = True
+                    break
+
+            if matched:
+
+                add_candidate(
+                    slug,
+                    allow_non_main=True,
+                )
+
+        print()
+        print("=" * 60)
+        print("AOT ENTRIES FOUND")
+        print("=" * 60)
+
+        for slug in sort_anime_slugs(
+            list(candidates.keys())
+        ):
+
+            print(
+                f"  - {get_anime_display_title(slug)}"
+                f" -> {slug}"
+            )
+
+        print("=" * 60)
+
+        return sort_anime_slugs(
+            list(candidates.keys())
+        )
+
+    # ========================================================
+    # DETECT SPECIFIC SEASON NUMBER
     # ========================================================
 
     specific_match = re.search(
@@ -759,17 +851,7 @@ def get_all_anime_seasons(anime):
         ).strip()
 
         # ----------------------------------------------------
-        # Detect franchise from base query
-        # ----------------------------------------------------
-
-        if not franchise:
-
-            franchise = FRANCHISES.get(
-                query_without_number
-            )
-
-        # ----------------------------------------------------
-        # Exact match
+        # Exact anime index match
         # ----------------------------------------------------
 
         exact_matches = (
@@ -787,31 +869,29 @@ def get_all_anime_seasons(anime):
             )
 
         # ----------------------------------------------------
-        # anime_index search
+        # Search anime_index.json
         # ----------------------------------------------------
 
         for name, slug in ANIME_INDEX.items():
 
-            normalized_name = normalize(
-                name
-            )
-
-            normalized_slug = normalize(
-                slug
-            )
+            normalized_name = normalize(name)
+            normalized_slug = normalize(slug)
 
             if not normalized_name:
                 continue
 
             # ------------------------------------------------
-            # Base franchise matching
+            # Check base franchise/name
             # ------------------------------------------------
 
             base_matches = False
 
             if franchise:
 
-                for keyword in franchise["keywords"]:
+                for keyword in franchise.get(
+                    "keywords",
+                    [],
+                ):
 
                     normalized_keyword = normalize(
                         keyword
@@ -842,42 +922,17 @@ def get_all_anime_seasons(anime):
                 continue
 
             # ------------------------------------------------
-            # Determine season number
+            # Determine season
             # ------------------------------------------------
-
-            combined = (
-                normalized_name
-                + " "
-                + normalized_slug
-            )
-
-            patterns = [
-
-                rf"\b{requested_number}(?:st|nd|rd|th)?\s+season\b",
-
-                rf"\bseason\s+{requested_number}\b",
-
-                rf"\b{requested_number}\s+season\b",
-
-                rf"\b{requested_number}\b",
-
-            ]
-
-            if not any(
-                re.search(
-                    pattern,
-                    combined,
-                )
-                for pattern in patterns
-            ):
-
-                continue
 
             detected_season = get_season_number(
                 slug
             )
 
-            if detected_season == requested_number:
+            if (
+                detected_season
+                == requested_number
+            ):
 
                 add_candidate(
                     slug,
@@ -885,7 +940,7 @@ def get_all_anime_seasons(anime):
                 )
 
         # ----------------------------------------------------
-        # Local files
+        # Search local JSON filenames
         # ----------------------------------------------------
 
         for slug in get_local_anime_slugs():
@@ -898,7 +953,10 @@ def get_all_anime_seasons(anime):
 
                 if not slug_matches_franchise(
                     slug,
-                    franchise["keywords"],
+                    franchise.get(
+                        "keywords",
+                        [],
+                    ),
                 ):
 
                     continue
@@ -916,18 +974,18 @@ def get_all_anime_seasons(anime):
                 slug
             )
 
-            if detected_season != requested_number:
-                continue
+            if (
+                detected_season
+                == requested_number
+            ):
 
-            add_candidate(
-                slug,
-                allow_non_main=False,
-            )
+                add_candidate(
+                    slug,
+                    allow_non_main=False,
+                )
 
         return sort_anime_slugs(
-            list(
-                candidates.keys()
-            )
+            list(candidates.keys())
         )
 
     # ========================================================
@@ -936,28 +994,25 @@ def get_all_anime_seasons(anime):
 
     if franchise:
 
-        keywords = franchise[
-            "keywords"
-        ]
+        keywords = franchise.get(
+            "keywords",
+            [],
+        )
 
         # ----------------------------------------------------
-        # A. anime_index.json
-        #
-        # IMPORTANT:
-        # Do NOT exclude movies here.
+        # Search anime_index.json
         # ----------------------------------------------------
 
         for name, slug in ANIME_INDEX.items():
 
-            normalized_name = normalize(
-                name
-            )
+            normalized_name = normalize(name)
+            normalized_slug = normalize(slug)
 
-            normalized_slug = normalize(
-                slug
-            )
+            if (
+                not normalized_name
+                and not normalized_slug
+            ):
 
-            if not normalized_name:
                 continue
 
             matched = False
@@ -981,16 +1036,18 @@ def get_all_anime_seasons(anime):
             if not matched:
                 continue
 
+            # ------------------------------------------------
+            # AOT is handled above.
+            # Other franchises exclude movies/OVAs.
+            # ------------------------------------------------
+
             add_candidate(
                 slug,
-                allow_non_main=True,
+                allow_non_main=False,
             )
 
         # ----------------------------------------------------
-        # B. Local KFSL JSON files
-        #
-        # IMPORTANT:
-        # Movies are included.
+        # Search local KFSL JSON filenames
         # ----------------------------------------------------
 
         for slug in get_local_anime_slugs():
@@ -1004,11 +1061,11 @@ def get_all_anime_seasons(anime):
 
             add_candidate(
                 slug,
-                allow_non_main=True,
+                allow_non_main=False,
             )
 
         # ----------------------------------------------------
-        # C. Canonical JJK seasons
+        # Canonical JJK seasons
         # ----------------------------------------------------
 
         if normalized_input in (
@@ -1028,32 +1085,29 @@ def get_all_anime_seasons(anime):
 
             ]
 
+            local_slugs = set(
+                get_local_anime_slugs()
+            )
+
+            indexed_slugs = {
+                str(x).strip()
+                for x in ANIME_INDEX.values()
+            }
+
             for slug in canonical_jjk:
 
-                exists_in_index = any(
-                    str(indexed_slug).strip()
-                    == slug
-                    for indexed_slug
-                    in ANIME_INDEX.values()
-                )
-
-                exists_locally = (
-                    slug
-                    in get_local_anime_slugs()
-                )
-
                 if (
-                    exists_in_index
-                    or exists_locally
+                    slug in indexed_slugs
+                    or slug in local_slugs
                 ):
 
                     add_candidate(
                         slug,
-                        allow_non_main=True,
+                        allow_non_main=False,
                     )
 
         # ----------------------------------------------------
-        # D. Canonical MHA seasons
+        # Canonical MHA seasons
         # ----------------------------------------------------
 
         elif normalized_input in (
@@ -1083,39 +1137,38 @@ def get_all_anime_seasons(anime):
 
             ]
 
+            local_slugs = set(
+                get_local_anime_slugs()
+            )
+
+            indexed_slugs = {
+                str(x).strip()
+                for x in ANIME_INDEX.values()
+            }
+
             for slug in canonical_mha:
 
-                exists_in_index = any(
-                    str(indexed_slug).strip()
-                    == slug
-                    for indexed_slug
-                    in ANIME_INDEX.values()
-                )
-
-                exists_locally = (
-                    slug
-                    in get_local_anime_slugs()
-                )
-
                 if (
-                    exists_in_index
-                    or exists_locally
+                    slug in indexed_slugs
+                    or slug in local_slugs
                 ):
 
                     add_candidate(
                         slug,
-                        allow_non_main=True,
+                        allow_non_main=False,
                     )
 
         return sort_anime_slugs(
-            list(
-                candidates.keys()
-            )
+            list(candidates.keys())
         )
 
     # ========================================================
     # NORMAL SEARCH
     # ========================================================
+
+    # --------------------------------------------------------
+    # Exact anime_index match
+    # --------------------------------------------------------
 
     exact_matches = (
         ANIME_INDEX_NORMALIZED.get(
@@ -1128,7 +1181,7 @@ def get_all_anime_seasons(anime):
 
         add_candidate(
             slug,
-            allow_non_main=True,
+            allow_non_main=False,
         )
 
     # --------------------------------------------------------
@@ -1143,21 +1196,21 @@ def get_all_anime_seasons(anime):
 
         if isinstance(
             alias,
-            (list, tuple, set)
+            (list, tuple, set),
         ):
 
             for slug in alias:
 
                 add_candidate(
                     slug,
-                    allow_non_main=True,
+                    allow_non_main=False,
                 )
 
         else:
 
             add_candidate(
                 alias,
-                allow_non_main=True,
+                allow_non_main=False,
             )
 
     # --------------------------------------------------------
@@ -1168,13 +1221,8 @@ def get_all_anime_seasons(anime):
 
         for name, slug in ANIME_INDEX.items():
 
-            normalized_name = normalize(
-                name
-            )
-
-            normalized_slug = normalize(
-                slug
-            )
+            normalized_name = normalize(name)
+            normalized_slug = normalize(slug)
 
             if not normalized_name:
                 continue
@@ -1190,7 +1238,7 @@ def get_all_anime_seasons(anime):
 
                 add_candidate(
                     slug,
-                    allow_non_main=True,
+                    allow_non_main=False,
                 )
 
     # --------------------------------------------------------
@@ -1201,9 +1249,7 @@ def get_all_anime_seasons(anime):
 
         for slug in get_local_anime_slugs():
 
-            normalized_slug = normalize(
-                slug
-            )
+            normalized_slug = normalize(slug)
 
             if (
                 normalized_input
@@ -1214,7 +1260,7 @@ def get_all_anime_seasons(anime):
 
                 add_candidate(
                     slug,
-                    allow_non_main=True,
+                    allow_non_main=False,
                 )
 
     # --------------------------------------------------------
@@ -1231,15 +1277,12 @@ def get_all_anime_seasons(anime):
 
             add_candidate(
                 fallback,
-                allow_non_main=True,
+                allow_non_main=False,
             )
 
     return sort_anime_slugs(
-        list(
-            candidates.keys()
-        )
+        list(candidates.keys())
     )
-
 
 # ============================================================
 # SORT ANIME SLUGS
