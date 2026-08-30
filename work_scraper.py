@@ -39,8 +39,14 @@ ROLE_NAMES = {
 # ============================================================
 
 NAME_ALIASES = {
+    # Existing aliases
     "keiichiro watanabe": "keiichirou watanabe",
     "kohei hirota": "kouhei hirota",
+
+    # Chengxi Huang
+    "chengxi huang": "chengxi huang",
+    "huang chengxi": "chengxi huang",
+    "黄成希": "chengxi huang",
 }
 
 
@@ -57,9 +63,10 @@ def normalize(text):
 
     Examples:
         Chengxi Huang -> chengxi huang
+        Huang Chengxi -> chengxi huang
         Keiichiro Watanabe -> keiichirou watanabe
         #17 (BD) -> 17 bd
-        黄成希 -> 黄成希
+        黄成希 -> chengxi huang
     """
 
     if not text:
@@ -86,47 +93,70 @@ def normalize(text):
 
 
 # ============================================================
-# LOAD LOCAL JSON
+# ADD NAME TO NAME SET
 # ============================================================
 
-def load_local_json(slug):
+def add_person_name(
+    names,
+    value,
+):
     """
-    Load local KFSL JSON if available.
+    Add a staff name and useful variants.
+
+    Handles:
+        Chengxi Huang
+        Huang Chengxi
+        黄成希
+
+    without assuming that every name is Western-style.
     """
 
-    path = os.path.join(
-        BASE_DIR,
-        f"{slug}.json",
+    if not isinstance(
+        value,
+        str,
+    ):
+        return
+
+    value = value.strip()
+
+    if not value:
+        return
+
+    # --------------------------------------------------------
+    # Original normalized name
+    # --------------------------------------------------------
+
+    normalized = normalize(
+        value
     )
 
-    if not os.path.exists(path):
-        return None
+    if not normalized:
+        return
 
-    print(
-        f"Local JSON found for {slug}"
+    names.add(
+        normalized
     )
 
-    print(
-        f"Using local JSON: {slug}.json"
-    )
+    # --------------------------------------------------------
+    # Add reversed two-part name
+    #
+    # Example:
+    #
+    # Chengxi Huang
+    # Huang Chengxi
+    # --------------------------------------------------------
 
-    try:
+    parts = normalized.split()
 
-        with open(
-            path,
-            "r",
-            encoding="utf-8",
-        ) as f:
+    if len(parts) == 2:
 
-            return json.load(f)
-
-    except Exception as e:
-
-        print(
-            f"JSON error: {e}"
+        reversed_name = (
+            f"{parts[1]} {parts[0]}"
         )
 
-        return None
+        names.add(
+            reversed_name
+        )
 
 
 # ============================================================
@@ -143,29 +173,48 @@ def get_person_names(person):
     ):
         return names
 
-    def add_name(value):
+    # --------------------------------------------------------
+    # Recursive value extractor
+    # --------------------------------------------------------
 
-        if not isinstance(
+    def collect_values(value):
+
+        if isinstance(
             value,
             str,
         ):
-            return
 
-        value = value.strip()
-
-        if not value:
-            return
-
-        normalized = normalize(
-            value
-        )
-
-        if normalized:
-            names.add(
-                normalized
+            add_person_name(
+                names,
+                value,
             )
 
+        elif isinstance(
+            value,
+            dict,
+        ):
+
+            for subvalue in value.values():
+
+                collect_values(
+                    subvalue
+                )
+
+        elif isinstance(
+            value,
+            list,
+        ):
+
+            for item in value:
+
+                collect_values(
+                    item
+                )
+
+    # --------------------------------------------------------
     # Direct name fields
+    # --------------------------------------------------------
+
     for key in (
         "en",
         "ja",
@@ -178,116 +227,60 @@ def get_person_names(person):
         "chinese",
     ):
 
-        value = person.get(
-            key
+        if key in person:
+
+            collect_values(
+                person.get(key)
+            )
+
+    # --------------------------------------------------------
+    # pn container
+    # --------------------------------------------------------
+
+    if "pn" in person:
+
+        collect_values(
+            person.get("pn")
         )
 
-        if isinstance(
-            value,
-            str,
-        ):
-
-            add_name(value)
-
-        elif isinstance(
-            value,
-            dict,
-        ):
-
-            for subvalue in value.values():
-
-                if isinstance(
-                    subvalue,
-                    str,
-                ):
-
-                    add_name(
-                        subvalue
-                    )
-
-    # pn container
-    pn = person.get(
-        "pn"
-    )
-
-    if isinstance(
-        pn,
-        dict,
-    ):
-
-        for value in pn.values():
-
-            if isinstance(
-                value,
-                str,
-            ):
-
-                add_name(value)
-
-            elif isinstance(
-                value,
-                dict,
-            ):
-
-                for subvalue in value.values():
-
-                    if isinstance(
-                        subvalue,
-                        str,
-                    ):
-
-                        add_name(
-                            subvalue
-                        )
-
+    # --------------------------------------------------------
     # names container
-    names_container = person.get(
-        "names"
-    )
+    # --------------------------------------------------------
 
-    if isinstance(
-        names_container,
-        list,
+    if "names" in person:
+
+        collect_values(
+            person.get("names")
+        )
+
+    # --------------------------------------------------------
+    # Chengxi Huang explicit variants
+    #
+    # KFSL can represent the same person using:
+    #
+    #   黄成希
+    #   Huang Chengxi
+    #   Chengxi Huang
+    #
+    # --------------------------------------------------------
+
+    if (
+        "黄成希" in names
+        or "huang chengxi" in names
+        or "chengxi huang" in names
     ):
 
-        for value in names_container:
+        names.add(
+            "chengxi huang"
+        )
 
-            if isinstance(
-                value,
-                str,
-            ):
+        names.add(
+            "huang chengxi"
+        )
 
-                add_name(value)
-
-            elif isinstance(
-                value,
-                dict,
-            ):
-
-                for subvalue in value.values():
-
-                    if isinstance(
-                        subvalue,
-                        str,
-                    ):
-
-                        add_name(
-                            subvalue
-                        )
-
-    elif isinstance(
-        names_container,
-        dict,
-    ):
-
-        for value in names_container.values():
-
-            if isinstance(
-                value,
-                str,
-            ):
-
-                add_name(value)
+        names.add(
+            "黄成希"
+        )
 
     return names
 
@@ -340,6 +333,86 @@ def get_main_name(person):
 
 
 # ============================================================
+# PERSON MATCHER
+# ============================================================
+
+def person_matches(
+    person,
+    animator,
+):
+    """
+    Check whether a KFSL person matches the requested animator.
+
+    Supports:
+
+        Chengxi Huang
+        Huang Chengxi
+        黄成希
+
+    and automatically handles reversed two-part names.
+    """
+
+    if not isinstance(
+        person,
+        dict,
+    ):
+        return False
+
+    target = normalize(
+        animator
+    )
+
+    if not target:
+        return False
+
+    names = get_person_names(
+        person
+    )
+
+    # --------------------------------------------------------
+    # Exact match
+    # --------------------------------------------------------
+
+    if target in names:
+        return True
+
+    # --------------------------------------------------------
+    # Reversed target
+    #
+    # Chengxi Huang
+    # Huang Chengxi
+    # --------------------------------------------------------
+
+    target_parts = target.split()
+
+    if len(target_parts) == 2:
+
+        reversed_target = (
+            f"{target_parts[1]} {target_parts[0]}"
+        )
+
+        if reversed_target in names:
+            return True
+
+    # --------------------------------------------------------
+    # Explicit Chengxi Huang handling
+    # --------------------------------------------------------
+
+    if target == "chengxi huang":
+
+        if "黄成希" in names:
+            return True
+
+        if "huang chengxi" in names:
+            return True
+
+        if "chengxi huang" in names:
+            return True
+
+    return False
+
+
+# ============================================================
 # FIND PERSON ID
 # ============================================================
 
@@ -359,8 +432,9 @@ def find_person_id(
             dict,
         ):
 
-            if target in get_person_names(
-                obj
+            if person_matches(
+                obj,
+                target,
             ):
 
                 person_id = obj.get(
@@ -398,7 +472,57 @@ def find_person_id(
 
         return None
 
-    return walk(data)
+    return walk(
+        data
+    )
+
+
+# ============================================================
+# LOAD LOCAL JSON
+# ============================================================
+
+def load_local_json(slug):
+    """
+    Load local KFSL JSON if available.
+    """
+
+    path = os.path.join(
+        BASE_DIR,
+        f"{slug}.json",
+    )
+
+    if not os.path.exists(
+        path
+    ):
+        return None
+
+    print(
+        f"Local JSON found for {slug}"
+    )
+
+    print(
+        f"Using local JSON: {slug}.json"
+    )
+
+    try:
+
+        with open(
+            path,
+            "r",
+            encoding="utf-8",
+        ) as f:
+
+            return json.load(
+                f
+            )
+
+    except Exception as e:
+
+        print(
+            f"JSON error: {e}"
+        )
+
+        return None
 
 
 # ============================================================
@@ -823,10 +947,6 @@ def search_episode(
     animator,
 ):
 
-    target = normalize(
-        animator
-    )
-
     results = []
 
     credits = episode.get(
@@ -900,17 +1020,23 @@ def search_episode(
                 ):
                     continue
 
+                # ------------------------------------------------
                 # Ignore studios
+                # ------------------------------------------------
+
                 if person.get(
                     "isStudio"
                 ):
                     continue
 
-                names = get_person_names(
-                    person
-                )
+                # ------------------------------------------------
+                # MATCH PERSON
+                # ------------------------------------------------
 
-                if target not in names:
+                if not person_matches(
+                    person,
+                    animator,
+                ):
                     continue
 
                 displayed_name = person.get(
@@ -1751,40 +1877,17 @@ def format_groups(groups):
 
 async def test():
 
-    animator = "Keiichiro Watanabe"
+    # --------------------------------------------------------
+    # CHANGE THIS TO TEST ANOTHER ANIMATOR
+    # --------------------------------------------------------
+
+    animator = "Chengxi Huang"
 
     anime_list = [
 
         {
-            "slug": "jujutsu-kaisen",
-            "title": "Jujutsu Kaisen",
-        },
-
-        {
-            "slug": "jujutsu-kaisen-2nd-season",
-            "title": "Jujutsu Kaisen 2nd Season",
-        },
-
-        {
-            "slug": (
-                "jujutsu-kaisen-3rd-season-"
-                "culling-game-part-1"
-            ),
-            "title": (
-                "Jujutsu Kaisen 3rd Season: "
-                "Culling Game Part 1"
-            ),
-        },
-
-        {
-            "slug": (
-                "jujutsu-kaisen-4th-season-"
-                "culling-game-part-2"
-            ),
-            "title": (
-                "Jujutsu Kaisen 4th Season: "
-                "Culling Game Part 2"
-            ),
+            "slug": "attack-on-titan",
+            "title": "Attack on Titan",
         },
 
     ]
@@ -1803,10 +1906,22 @@ async def test():
         "=" * 70
     )
 
+    print(
+        f"Animator: {animator}"
+    )
+
     results = await get_animator_works_all(
         animator,
         anime_list,
     )
+
+    if not results:
+
+        print()
+
+        print(
+            "No work found for this animator."
+        )
 
     for result in results:
 
@@ -1846,3 +1961,4 @@ if __name__ == "__main__":
     asyncio.run(
         test()
     )
+
