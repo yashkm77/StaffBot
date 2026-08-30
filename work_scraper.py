@@ -4,7 +4,6 @@ import json
 import re
 import html as html_module
 import os
-import unicodedata
 
 
 # ============================================================
@@ -12,7 +11,6 @@ import unicodedata
 # ============================================================
 
 BASE_URL = "https://keyframe-staff-list.com/staff"
-BASE_DOMAIN = "https://keyframe-staff-list.com"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -38,48 +36,50 @@ ROLE_NAMES = {
 
 # ============================================================
 # NAME ALIASES
-# ============================================================
 #
-# These are applied to the SEARCH QUERY.
+# Important:
+# Chengxi Huang is 黄成希.
 #
-# Example:
+# KFSL may use:
+#   Chengxi Huang
+#   Huang Chengxi
+#   黄成希
 #
-# Chengxi Huang
-#     ->
-# chengxi huang
-#
-# and we also explicitly know:
-#
-# Chengxi Huang <-> 黄成希
-#
+# All of these are treated as the same person.
 # ============================================================
 
 NAME_ALIASES = {
 
-    # Existing aliases
-    "keiichiro watanabe": "keiichirou watanabe",
-    "kohei hirota": "kouhei hirota",
-
+    # --------------------------------------------------------
     # Chengxi Huang
+    # --------------------------------------------------------
+
     "chengxi huang": "chengxi huang",
     "huang chengxi": "chengxi huang",
     "黄成希": "chengxi huang",
-    "成希 黄": "chengxi huang",
-    "黄 成希": "chengxi huang",
+
+    # --------------------------------------------------------
+    # Other known aliases
+    # --------------------------------------------------------
+
+    "keiichiro watanabe": "keiichirou watanabe",
+    "keiichirou watanabe": "keiichirou watanabe",
+
+    "kohei hirota": "kouhei hirota",
+    "kouhei hirota": "kouhei hirota",
 }
 
 
 # ============================================================
-# MULTI-NAME ALIASES
-# ============================================================
+# EXTRA NAME ALIASES
 #
-# This is more powerful than NAME_ALIASES.
+# Used when searching.
 #
-# A search for one name can match ANY of these names.
-#
+# This is intentionally separate from NAME_ALIASES so one
+# normalized person can have several accepted spellings.
 # ============================================================
 
-PERSON_NAME_ALIASES = {
+PERSON_SEARCH_ALIASES = {
 
     "chengxi huang": {
         "chengxi huang",
@@ -104,43 +104,20 @@ PERSON_NAME_ALIASES = {
 # ============================================================
 
 def normalize(text):
-    """
-    Normalize names / roles / menu names.
-
-    Unicode is preserved.
-
-    Examples:
-
-        Chengxi Huang
-            -> chengxi huang
-
-        黄成希
-            -> 黄成希
-
-        #17 (BD)
-            -> 17 bd
-
-        Storyboard / Episode Director
-            -> storyboard episode director
-    """
 
     if text is None:
         return ""
 
-    text = str(text).strip()
+    text = str(text).strip().lower()
 
     if not text:
         return ""
 
-    # Unicode normalization
-    text = unicodedata.normalize(
-        "NFKC",
-        text,
-    )
-
-    text = text.lower()
-
-    # Replace punctuation while preserving Unicode letters/numbers
+    # Preserve Unicode letters such as:
+    #
+    # 黄成希
+    # 進撃の巨人
+    #
     text = re.sub(
         r"[^\w]+",
         " ",
@@ -148,136 +125,65 @@ def normalize(text):
         flags=re.UNICODE,
     )
 
-    text = " ".join(
-        text.split()
-    )
-
-    return text
-
-
-# ============================================================
-# NORMALIZE SEARCH NAME
-# ============================================================
-
-def normalize_search_name(name):
-    """
-    Normalize the user's animator query.
-
-    Applies aliases such as:
-
-        Kohei Hirota
-            -> kouhei hirota
-
-        黄成希
-            -> chengxi huang
-
-    """
-
-    normalized = normalize(name)
-
-    if not normalized:
-        return ""
+    text = " ".join(text.split())
 
     return NAME_ALIASES.get(
-        normalized,
-        normalized,
+        text,
+        text,
     )
 
 
 # ============================================================
-# GET SEARCH ALIASES
+# GET SEARCH NAMES
 # ============================================================
 
-def get_search_aliases(name):
-    """
-    Return every known form of a person's name.
+def get_search_names(animator):
 
-    Chengxi Huang returns:
+    normalized = normalize(animator)
 
-        chengxi huang
-        huang chengxi
-        黄成希
-    """
-
-    normalized = normalize(name)
-
-    canonical = NAME_ALIASES.get(
-        normalized,
-        normalized,
-    )
-
-    aliases = set()
+    names = set()
 
     if normalized:
-        aliases.add(normalized)
+        names.add(normalized)
 
-    if canonical:
-        aliases.add(canonical)
-
-    aliases.update(
-        PERSON_NAME_ALIASES.get(
-            canonical,
-            set(),
-        )
+    aliases = PERSON_SEARCH_ALIASES.get(
+        normalized
     )
 
-    return {
-        normalize(x)
-        for x in aliases
-        if normalize(x)
-    }
+    if aliases:
+        for alias in aliases:
+            names.add(
+                normalize(alias)
+            )
+
+    return names
 
 
 # ============================================================
-# NAME MATCH
+# PERSON NAME MATCH
 # ============================================================
 
-def names_match(
-    target_name,
-    person_names,
-):
-    """
-    Determine whether a target animator matches
-    any name belonging to a KFSL person.
+def person_matches(person, animator):
 
-    This is the important fix for:
-
-        Chengxi Huang
-            <->
-
-        黄成希
-    """
-
-    target_aliases = get_search_aliases(
-        target_name
+    target_names = get_search_names(
+        animator
     )
 
-    if not target_aliases:
+    if not target_names:
         return False
 
-    normalized_person_names = {
-        normalize(x)
-        for x in person_names
-        if normalize(x)
-    }
+    person_names = get_person_names(
+        person
+    )
 
-    # Direct match
-    if target_aliases & normalized_person_names:
-        return True
+    if not person_names:
+        return False
 
-    # --------------------------------------------------------
-    # Extra Chinese / Japanese safety
-    # --------------------------------------------------------
-    #
-    # If the target is romanized but the JSON only contains
-    # a CJK name, our explicit aliases above handle known
-    # people.
-    #
-    # Do NOT perform fuzzy matching on CJK names because
-    # that can create false positives.
-    #
-
-    return False
+    return bool(
+        target_names.intersection(
+            person_names
+        )
+    )
 
 
 # ============================================================
@@ -358,7 +264,7 @@ def get_person_names(person):
             )
 
     # --------------------------------------------------------
-    # Direct name fields
+    # Direct fields
     # --------------------------------------------------------
 
     direct_fields = (
@@ -372,7 +278,7 @@ def get_person_names(person):
         "japanese",
         "chinese",
         "english",
-        "native",
+        "original",
     )
 
     for key in direct_fields:
@@ -386,7 +292,9 @@ def get_person_names(person):
             str,
         ):
 
-            add_name(value)
+            add_name(
+                value
+            )
 
         elif isinstance(
             value,
@@ -417,14 +325,16 @@ def get_person_names(person):
         dict,
     ):
 
-        for key, value in pn.items():
+        for value in pn.values():
 
             if isinstance(
                 value,
                 str,
             ):
 
-                add_name(value)
+                add_name(
+                    value
+                )
 
             elif isinstance(
                 value,
@@ -462,7 +372,9 @@ def get_person_names(person):
                 str,
             ):
 
-                add_name(value)
+                add_name(
+                    value
+                )
 
             elif isinstance(
                 value,
@@ -492,7 +404,9 @@ def get_person_names(person):
                 str,
             ):
 
-                add_name(value)
+                add_name(
+                    value
+                )
 
             elif isinstance(
                 value,
@@ -536,8 +450,8 @@ def get_main_name(person):
 
         for key in (
             "en",
+            "english",
             "romanized",
-            "romaji",
         ):
 
             value = pn.get(
@@ -553,9 +467,10 @@ def get_main_name(person):
 
     for key in (
         "en",
-        "name",
+        "english",
         "romanized",
         "romaji",
+        "name",
     ):
 
         value = person.get(
@@ -589,13 +504,9 @@ def find_person_id(
             dict,
         ):
 
-            names = get_person_names(
-                obj
-            )
-
-            if names_match(
+            if person_matches(
+                obj,
                 animator,
-                names,
             ):
 
                 person_id = obj.get(
@@ -720,10 +631,7 @@ def get_work_type(menu_name):
         text
     )
 
-    # --------------------------------------------------------
-    # OP
-    # --------------------------------------------------------
-
+    # OP1 / OP 1 / OP#1
     if re.fullmatch(
         r"op\s*(?:#\s*)?\d+",
         normalized,
@@ -731,10 +639,7 @@ def get_work_type(menu_name):
 
         return "OP"
 
-    # --------------------------------------------------------
-    # ED
-    # --------------------------------------------------------
-
+    # ED1 / ED 1 / ED#1
     if re.fullmatch(
         r"ed\s*(?:#\s*)?\d+",
         normalized,
@@ -742,10 +647,8 @@ def get_work_type(menu_name):
 
         return "ED"
 
-    # --------------------------------------------------------
-    # Episode
-    # --------------------------------------------------------
-
+    # Anything containing a number is treated
+    # as an episode/work entry.
     if re.search(
         r"\d+",
         normalized,
@@ -773,7 +676,6 @@ def get_episode_number(menu_name):
         text
     )
 
-    # OP
     if re.fullmatch(
         r"op\s*(?:#\s*)?\d+",
         normalized,
@@ -781,7 +683,6 @@ def get_episode_number(menu_name):
 
         return None
 
-    # ED
     if re.fullmatch(
         r"ed\s*(?:#\s*)?\d+",
         normalized,
@@ -827,6 +728,20 @@ def get_episode_data(data):
         [],
     )
 
+    # --------------------------------------------------------
+    # Some KFSL JSON variants may use another container.
+    # --------------------------------------------------------
+
+    if not isinstance(
+        menus,
+        list,
+    ):
+
+        menus = data.get(
+            "menu",
+            [],
+        )
+
     if not isinstance(
         menus,
         list,
@@ -844,7 +759,10 @@ def get_episode_data(data):
         menu_name = str(
             menu.get(
                 "name",
-                "",
+                menu.get(
+                    "title",
+                    "",
+                ),
             )
         ).strip()
 
@@ -854,6 +772,16 @@ def get_episode_data(data):
         credits = menu.get(
             "credits"
         )
+
+        if not isinstance(
+            credits,
+            list,
+        ):
+
+            credits = menu.get(
+                "credit",
+                [],
+            )
 
         if not isinstance(
             credits,
@@ -889,6 +817,25 @@ def get_episode_data(data):
         })
 
     # --------------------------------------------------------
+    # Remove duplicate menu entries
+    # --------------------------------------------------------
+
+    unique = {}
+
+    for episode in episodes:
+
+        key = (
+            episode.get("work_name"),
+            episode.get("work_type"),
+        )
+
+        unique[key] = episode
+
+    episodes = list(
+        unique.values()
+    )
+
+    # --------------------------------------------------------
     # SORT
     # --------------------------------------------------------
 
@@ -903,32 +850,26 @@ def get_episode_data(data):
         )
 
         if work_type == "OP":
-
             priority = 0
 
         elif work_type == "EPISODE":
-
             priority = 1
 
         elif work_type == "ED":
-
             priority = 2
 
         else:
-
             priority = 3
 
         return (
             priority,
             episode
             if episode is not None
-            else 999999,
-            str(
-                item.get(
-                    "work_name",
-                    "",
-                )
-            ).lower(),
+            else 9999,
+            item.get(
+                "work_name",
+                "",
+            ),
         )
 
     episodes.sort(
@@ -955,21 +896,35 @@ def normalize_role_name(role_name):
         text
     )
 
+    # --------------------------------------------------------
+    # Key Animation
+    # --------------------------------------------------------
+
     if normalized in (
         "key animation",
         "key animator",
+        "key animation artist",
     ):
 
         return "Key Animation"
+
+    # --------------------------------------------------------
+    # 2nd Key Animation
+    # --------------------------------------------------------
 
     if normalized in (
         "2nd key animation",
         "second key animation",
         "2nd key animator",
         "second key animator",
+        "2nd key animation artist",
     ):
 
         return "2nd Key Animation"
+
+    # --------------------------------------------------------
+    # Storyboard
+    # --------------------------------------------------------
 
     if normalized in (
         "storyboard",
@@ -978,6 +933,10 @@ def normalize_role_name(role_name):
 
         return "Storyboard"
 
+    # --------------------------------------------------------
+    # Episode Director
+    # --------------------------------------------------------
+
     if normalized in (
         "episode director",
         "episode director ed",
@@ -985,13 +944,22 @@ def normalize_role_name(role_name):
 
         return "Episode Director"
 
+    # --------------------------------------------------------
+    # Storyboard / Episode Director
+    # --------------------------------------------------------
+
     if normalized in (
         "storyboard episode director",
         "storyboard episode director ed",
         "storyboard episode director sb ed",
+        "storyboard episode director sb ed",
     ):
 
         return "Storyboard / Episode Director"
+
+    # --------------------------------------------------------
+    # Animation Director
+    # --------------------------------------------------------
 
     if normalized in (
         "animation director",
@@ -1000,14 +968,22 @@ def normalize_role_name(role_name):
 
         return "Animation Director"
 
+    # --------------------------------------------------------
+    # Assistant Animation Director
+    # --------------------------------------------------------
+
     if normalized in (
         "assistant animation director",
         "assistant animation director aad",
         "assistant animation director ass ad",
-        "assistant animation director ass aad",
+        "assistant animation director aad",
     ):
 
         return "Assistant Animation Director"
+
+    # --------------------------------------------------------
+    # Chief Animation Director
+    # --------------------------------------------------------
 
     if normalized in (
         "chief animation director",
@@ -1016,12 +992,20 @@ def normalize_role_name(role_name):
 
         return "Chief Animation Director"
 
+    # --------------------------------------------------------
+    # Character Design
+    # --------------------------------------------------------
+
     if normalized in (
         "character design",
         "character designer",
     ):
 
         return "Character Design"
+
+    # --------------------------------------------------------
+    # Art Director
+    # --------------------------------------------------------
 
     if normalized in (
         "art director",
@@ -1030,12 +1014,20 @@ def normalize_role_name(role_name):
 
         return "Art Director"
 
+    # --------------------------------------------------------
+    # Art Board
+    # --------------------------------------------------------
+
     if normalized in (
         "art board",
         "artboard",
     ):
 
         return "Art Board"
+
+    # --------------------------------------------------------
+    # Main Animator
+    # --------------------------------------------------------
 
     if normalized in (
         "main animator",
@@ -1061,6 +1053,98 @@ def get_role_display_name(role):
         canonical,
         canonical,
     )
+
+
+# ============================================================
+# EXTRACT PEOPLE FROM CREDIT
+#
+# Handles:
+#
+# staff: [...]
+# staff: {...}
+# person: {...}
+# people: [...]
+#
+# This makes the parser less dependent on one exact KFSL
+# JSON shape.
+# ============================================================
+
+def extract_people(value):
+
+    people = []
+
+    if isinstance(
+        value,
+        list,
+    ):
+
+        for item in value:
+
+            if isinstance(
+                item,
+                dict,
+            ):
+
+                people.append(
+                    item
+                )
+
+            elif isinstance(
+                item,
+                list,
+            ):
+
+                people.extend(
+                    extract_people(item)
+                )
+
+    elif isinstance(
+        value,
+        dict,
+    ):
+
+        # ----------------------------------------------------
+        # A direct person object
+        # ----------------------------------------------------
+
+        if (
+            "en" in value
+            or "ja" in value
+            or "zh" in value
+            or "name" in value
+            or "pn" in value
+            or "names" in value
+            or "id" in value
+        ):
+
+            people.append(
+                value
+            )
+
+        # ----------------------------------------------------
+        # Otherwise search nested containers
+        # ----------------------------------------------------
+
+        for key in (
+            "staff",
+            "people",
+            "persons",
+            "person",
+            "members",
+            "artists",
+        ):
+
+            nested = value.get(
+                key
+            )
+
+            if nested is not None:
+
+                people.extend(
+                    extract_people(nested)
+                )
+
+    return people
 
 
 # ============================================================
@@ -1093,16 +1177,40 @@ def search_episode(
         ):
             continue
 
+        # ----------------------------------------------------
+        # Normal KFSL structure:
+        #
+        # {
+        #   "roles": [...]
+        # }
+        # ----------------------------------------------------
+
         roles = credit_group.get(
-            "roles",
-            [],
+            "roles"
         )
 
         if not isinstance(
             roles,
             list,
         ):
-            continue
+
+            # Some structures may have one role directly.
+            if (
+                "name" in credit_group
+                and (
+                    "staff" in credit_group
+                    or "people" in credit_group
+                    or "person" in credit_group
+                )
+            ):
+
+                roles = [
+                    credit_group
+                ]
+
+            else:
+
+                roles = []
 
         for role in roles:
 
@@ -1115,7 +1223,10 @@ def search_episode(
             role_name = str(
                 role.get(
                     "name",
-                    "",
+                    role.get(
+                        "role",
+                        "",
+                    ),
                 )
             ).strip()
 
@@ -1126,66 +1237,124 @@ def search_episode(
                 role_name
             )
 
-            staff = role.get(
+            # ------------------------------------------------
+            # Extract staff from every common field
+            # ------------------------------------------------
+
+            people = []
+
+            for field in (
                 "staff",
-                [],
-            )
-
-            if not isinstance(
-                staff,
-                list,
+                "people",
+                "persons",
+                "person",
+                "members",
+                "artists",
             ):
-                continue
 
-            for person in staff:
+                value = role.get(
+                    field
+                )
 
-                if not isinstance(
-                    person,
-                    dict,
-                ):
+                if value is not None:
+
+                    people.extend(
+                        extract_people(
+                            value
+                        )
+                    )
+
+            # ------------------------------------------------
+            # Remove duplicate person objects
+            # ------------------------------------------------
+
+            unique_people = []
+
+            seen_persons = set()
+
+            for person in people:
+
+                person_id = person.get(
+                    "id"
+                )
+
+                if person_id is not None:
+
+                    person_key = (
+                        "id",
+                        str(person_id),
+                    )
+
+                else:
+
+                    person_key = (
+                        "names",
+                        tuple(
+                            sorted(
+                                get_person_names(
+                                    person
+                                )
+                            )
+                        ),
+                    )
+
+                if person_key in seen_persons:
                     continue
 
-                # ------------------------------------------------
-                # Ignore studios
-                # ------------------------------------------------
+                seen_persons.add(
+                    person_key
+                )
 
+                unique_people.append(
+                    person
+                )
+
+            # ------------------------------------------------
+            # Search people
+            # ------------------------------------------------
+
+            for person in unique_people:
+
+                # Ignore studios
                 if person.get(
                     "isStudio"
                 ):
                     continue
 
-                names = get_person_names(
-                    person
-                )
-
-                # ------------------------------------------------
-                # IMPORTANT:
-                #
-                # Use alias-aware matching instead of:
-                #
-                # target in names
-                #
-                # ------------------------------------------------
-
-                if not names_match(
-                    animator,
-                    names,
+                if person.get(
+                    "is_studio"
                 ):
+                    continue
 
+                # ------------------------------------------------
+                # THIS IS THE IMPORTANT FIX
+                #
+                # Search all accepted names:
+                #
+                # Chengxi Huang
+                # Huang Chengxi
+                # 黄成希
+                # ------------------------------------------------
+
+                if not person_matches(
+                    person,
+                    animator,
+                ):
                     continue
 
                 displayed_name = ""
 
+                # Prefer English name
                 for key in (
                     "en",
-                    "name",
+                    "english",
                     "romanized",
                     "romaji",
+                    "name",
                 ):
 
                     value = person.get(
-                        key,
-                        "",
+                        key
                     )
 
                     if isinstance(
@@ -1196,17 +1365,11 @@ def search_episode(
                         displayed_name = value.strip()
                         break
 
-                # If no English name exists, use main name
                 if not displayed_name:
 
                     displayed_name = get_main_name(
                         person
                     )
-
-                # If still empty, use the query
-                if not displayed_name:
-
-                    displayed_name = animator
 
                 results.append({
 
@@ -1324,64 +1487,6 @@ def search_local_json(
 
 
 # ============================================================
-# REMOVE DUPLICATE RESULTS
-# ============================================================
-
-def deduplicate_results(results):
-
-    unique = []
-
-    seen = set()
-
-    for result in results:
-
-        key = (
-
-            result.get(
-                "anime",
-                "",
-            ),
-
-            result.get(
-                "slug",
-                "",
-            ),
-
-            result.get(
-                "episode",
-            ),
-
-            result.get(
-                "work_name",
-                "",
-            ),
-
-            result.get(
-                "role",
-                "",
-            ),
-
-            result.get(
-                "id",
-            ),
-
-        )
-
-        if key in seen:
-            continue
-
-        seen.add(
-            key
-        )
-
-        unique.append(
-            result
-        )
-
-    return unique
-
-
-# ============================================================
 # HTTP HEADERS
 # ============================================================
 
@@ -1410,8 +1515,6 @@ def get_headers():
         "Cache-Control": "no-cache",
 
         "Pragma": "no-cache",
-
-        "Referer": BASE_DOMAIN + "/",
 
     }
 
@@ -1525,10 +1628,6 @@ async def get_staff_profile(
                     errors="ignore",
                 )
 
-                # ------------------------------------------------
-                # Standard staff profile URL
-                # ------------------------------------------------
-
                 match = re.search(
                     r'href=["\'](/staff/[a-f0-9]{40,})["\']',
                     text,
@@ -1538,20 +1637,19 @@ async def get_staff_profile(
                 if match:
 
                     return (
-                        BASE_DOMAIN
+                        "https://keyframe-staff-list.com"
                         + match.group(1)
                     )
-
-                # ------------------------------------------------
-                # Redirected profile
-                # ------------------------------------------------
 
                 final_url = str(
                     response.url
                 )
 
-                if final_url.startswith(
-                    BASE_DOMAIN + "/staff/"
+                if (
+                    final_url.startswith(
+                        "https://keyframe-staff-list.com/staff/"
+                    )
+                    and final_url != url
                 ):
 
                     return final_url
@@ -1627,19 +1725,11 @@ def build_grouped_works(results):
 
                 continue
 
-        # --------------------------------------------------------
-        # Prevent duplicate work under the same role
-        # --------------------------------------------------------
-
-        work_key = normalize(
-            work_name
-        )
-
-        if work_key in seen[role]:
+        if work_name in seen[role]:
             continue
 
         seen[role].add(
-            work_key
+            work_name
         )
 
         grouped[role].append(
@@ -1661,6 +1751,43 @@ def sort_work_names(work_names):
             value
         )
 
+        normalized = normalize(
+            text
+        )
+
+        # OP before normal episode
+        op_match = re.fullmatch(
+            r"op\s*(?:#\s*)?(\d+)",
+            normalized,
+        )
+
+        if op_match:
+
+            return (
+                0,
+                int(
+                    op_match.group(1)
+                ),
+                text.lower(),
+            )
+
+        # ED
+        ed_match = re.fullmatch(
+            r"ed\s*(?:#\s*)?(\d+)",
+            normalized,
+        )
+
+        if ed_match:
+
+            return (
+                2,
+                int(
+                    ed_match.group(1)
+                ),
+                text.lower(),
+            )
+
+        # Normal episode
         match = re.search(
             r"\d+",
             text,
@@ -1669,7 +1796,7 @@ def sort_work_names(work_names):
         if match:
 
             return (
-                0,
+                1,
                 int(
                     match.group(0)
                 ),
@@ -1677,7 +1804,7 @@ def sort_work_names(work_names):
             )
 
         return (
-            1,
+            3,
             999999,
             text.lower(),
         )
@@ -1709,13 +1836,6 @@ async def get_animator_works(
             .title()
         )
 
-    print()
-    print(
-        f"Checking season: {anime_title}"
-    )
-    print(
-        f"Slug: {anime_slug}"
-    )
     print(
         f"Staff: {animator}"
     )
@@ -1737,16 +1857,37 @@ async def get_animator_works(
             animator,
         )
 
-        results = deduplicate_results(
-            results
+        print(
+            f"Matches found: {len(results)}"
         )
 
         if not results:
 
-            print(
-                f"No work found for "
-                f"{animator} in {anime_title}"
-            )
+            # ------------------------------------------------
+            # DEBUG NAME SEARCH
+            #
+            # This tells you what names were actually present
+            # if Chengxi Huang still fails.
+            # ------------------------------------------------
+
+            if normalize(animator) == "chengxi huang":
+
+                print(
+                    "DEBUG: Chengxi Huang was not found "
+                    "in the staff credits."
+                )
+
+                print(
+                    "Accepted names:"
+                )
+
+                for name in sorted(
+                    get_search_names(animator)
+                ):
+
+                    print(
+                        f"  - {name}"
+                    )
 
             return {
 
@@ -1766,19 +1907,9 @@ async def get_animator_works(
 
             }
 
-        person_id = None
-
-        for result in results:
-
-            if result.get(
-                "id"
-            ) is not None:
-
-                person_id = result.get(
-                    "id"
-                )
-
-                break
+        person_id = results[0].get(
+            "id"
+        )
 
         headers = get_headers()
 
@@ -1866,204 +1997,179 @@ async def get_animator_works(
         sock_read=20,
     )
 
-    try:
+    async with aiohttp.ClientSession(
+        headers=headers,
+        timeout=timeout,
+    ) as session:
 
-        async with aiohttp.ClientSession(
-            headers=headers,
-            timeout=timeout,
-        ) as session:
+        page = await get_anime_page(
+            session,
+            anime_slug,
+        )
 
-            page = await get_anime_page(
-                session,
-                anime_slug,
-            )
-
-            if not page:
-
-                return {
-
-                    "name": animator,
-
-                    "anime": anime_title,
-
-                    "slug": anime_slug,
-
-                    "profile_url": None,
-
-                    "groups": {},
-
-                    "found": False,
-
-                    "source": "unavailable",
-
-                }
-
-            data = extract_staff_list_data(
-                page
-            )
-
-            if not data:
-
-                return {
-
-                    "name": animator,
-
-                    "anime": anime_title,
-
-                    "slug": anime_slug,
-
-                    "profile_url": None,
-
-                    "groups": {},
-
-                    "found": False,
-
-                    "source": "unavailable",
-
-                }
-
-            results = search_local_json(
-                data,
-                anime_title,
-                anime_slug,
-                animator,
-            )
-
-            results = deduplicate_results(
-                results
-            )
-
-            if not results:
-
-                print(
-                    f"No work found for "
-                    f"{animator} in {anime_title}"
-                )
-
-                return {
-
-                    "name": animator,
-
-                    "anime": anime_title,
-
-                    "slug": anime_slug,
-
-                    "profile_url": None,
-
-                    "groups": {},
-
-                    "found": False,
-
-                    "source": "runtime",
-
-                }
-
-            grouped = build_grouped_works(
-                results
-            )
-
-            for role in grouped:
-
-                grouped[role] = sort_work_names(
-                    grouped[role]
-                )
-
-            person_id = None
-
-            for result in results:
-
-                if result.get(
-                    "id"
-                ) is not None:
-
-                    person_id = result.get(
-                        "id"
-                    )
-
-                    break
-
-            profile_url = None
-
-            if person_id:
-
-                profile_url = await get_staff_profile(
-                    session,
-                    person_id,
-                )
+        if not page:
 
             return {
 
-                "name": (
-                    results[0].get(
-                        "name"
-                    )
-                    or results[0].get(
-                        "main_name"
-                    )
-                    or animator
-                ),
+                "name": animator,
 
                 "anime": anime_title,
 
                 "slug": anime_slug,
 
-                "profile_url": profile_url,
+                "profile_url": None,
 
-                "groups": grouped,
+                "groups": {},
 
-                "found": True,
+                "found": False,
+
+                "source": "unavailable",
+
+            }
+
+        data = extract_staff_list_data(
+            page
+        )
+
+        if not data:
+
+            return {
+
+                "name": animator,
+
+                "anime": anime_title,
+
+                "slug": anime_slug,
+
+                "profile_url": None,
+
+                "groups": {},
+
+                "found": False,
+
+                "source": "unavailable",
+
+            }
+
+        results = search_local_json(
+            data,
+            anime_title,
+            anime_slug,
+            animator,
+        )
+
+        if not results:
+
+            return {
+
+                "name": animator,
+
+                "anime": anime_title,
+
+                "slug": anime_slug,
+
+                "profile_url": None,
+
+                "groups": {},
+
+                "found": False,
 
                 "source": "runtime",
 
             }
 
-    except asyncio.TimeoutError:
-
-        print(
-            f"Runtime KFSL timeout: {anime_slug}"
+        grouped = build_grouped_works(
+            results
         )
+
+        for role in grouped:
+
+            grouped[role] = sort_work_names(
+                grouped[role]
+            )
+
+        person_id = results[0].get(
+            "id"
+        )
+
+        profile_url = None
+
+        if person_id:
+
+            profile_url = await get_staff_profile(
+                session,
+                person_id,
+            )
 
         return {
 
-            "name": animator,
+            "name": (
+                results[0].get(
+                    "name"
+                )
+                or results[0].get(
+                    "main_name"
+                )
+                or animator
+            ),
 
             "anime": anime_title,
 
             "slug": anime_slug,
 
-            "profile_url": None,
+            "profile_url": profile_url,
 
-            "groups": {},
+            "groups": grouped,
 
-            "found": False,
+            "found": True,
 
-            "source": "unavailable",
-
-        }
-
-    except aiohttp.ClientError as e:
-
-        print(
-            f"Runtime KFSL error: {e}"
-        )
-
-        return {
-
-            "name": animator,
-
-            "anime": anime_title,
-
-            "slug": anime_slug,
-
-            "profile_url": None,
-
-            "groups": {},
-
-            "found": False,
-
-            "source": "unavailable",
+            "source": "runtime",
 
         }
+
+
+# ============================================================
+# REMOVE DUPLICATE ANIME ENTRIES
+# ============================================================
+
+def deduplicate_anime_list(anime_list):
+
+    unique = {}
+
+    for item in anime_list:
+
+        if not isinstance(
+            item,
+            dict,
+        ):
+            continue
+
+        slug = str(
+            item.get(
+                "slug",
+                "",
+            )
+        ).strip()
+
+        if not slug:
+            continue
+
+        # Keep first occurrence
+        if slug not in unique:
+
+            unique[slug] = {
+
+                "slug": slug,
+
+                "title": item.get(
+                    "title"
+                ) or slug,
+
+            }
+
+    return list(
+        unique.values()
+    )
 
 
 # ============================================================
@@ -2099,57 +2205,15 @@ async def get_animator_works_all(
     if not anime_list:
         return results
 
-    # ========================================================
-    # REMOVE DUPLICATE SLUGS
-    # ========================================================
+    anime_list = deduplicate_anime_list(
+        anime_list
+    )
 
-    unique_anime = []
-
-    seen_slugs = set()
+    print(
+        f"Unique anime entries: {len(anime_list)}"
+    )
 
     for item in anime_list:
-
-        if not isinstance(
-            item,
-            dict,
-        ):
-            continue
-
-        slug = str(
-            item.get(
-                "slug",
-                "",
-            )
-        ).strip()
-
-        if not slug:
-            continue
-
-        slug_key = normalize(
-            slug
-        )
-
-        if slug_key in seen_slugs:
-
-            print(
-                f"Skipping duplicate slug: {slug}"
-            )
-
-            continue
-
-        seen_slugs.add(
-            slug_key
-        )
-
-        unique_anime.append(
-            item
-        )
-
-    # ========================================================
-    # CHECK
-    # ========================================================
-
-    for item in unique_anime:
 
         slug = item.get(
             "slug"
@@ -2240,21 +2304,17 @@ def format_groups(groups):
             [],
         )
 
-        formatted[display_role].extend(
-            works
-        )
+        for work in works:
 
-    # --------------------------------------------------------
-    # Remove duplicate works after formatting
-    # --------------------------------------------------------
+            if work not in formatted[display_role]:
+
+                formatted[
+                    display_role
+                ].append(
+                    work
+                )
 
     for role in formatted:
-
-        formatted[role] = list(
-            dict.fromkeys(
-                formatted[role]
-            )
-        )
 
         formatted[role] = sort_work_names(
             formatted[role]
@@ -2264,20 +2324,23 @@ def format_groups(groups):
 
 
 # ============================================================
-# DEBUG PERSON SEARCH
+# DEBUG ONE JSON
+#
+# Useful if Chengxi Huang still returns nothing.
+# It prints every matching name containing:
+#
+# cheng
+# huang
+# 黄
+#
 # ============================================================
 
-def debug_person_search(
+def debug_animator_in_json(
     data,
     animator,
 ):
-    """
-    Useful when an animator still isn't found.
 
-    Shows people whose names contain part of the query.
-    """
-
-    target_aliases = get_search_aliases(
+    target_names = get_search_names(
         animator
     )
 
@@ -2286,16 +2349,16 @@ def debug_person_search(
         "=" * 70
     )
     print(
-        f"DEBUG NAME SEARCH: {animator}"
+        f"DEBUG SEARCH: {animator}"
     )
     print(
-        f"Search aliases: {sorted(target_aliases)}"
+        f"Accepted normalized names: {sorted(target_names)}"
     )
     print(
         "=" * 70
     )
 
-    matches = []
+    found_people = []
 
     def walk(obj):
 
@@ -2310,30 +2373,30 @@ def debug_person_search(
 
             if names:
 
-                for target in target_aliases:
+                # Exact match
+                if names.intersection(
+                    target_names
+                ):
 
-                    for name in names:
+                    found_people.append(
+                        obj
+                    )
 
-                        if (
-                            target in name
-                            or name in target
-                        ):
+                # Partial debug match
+                elif any(
+                    (
+                        "chengxi" in name
+                        or "huang" in name
+                        or "黄" in name
+                        or "成希" in name
+                    )
+                    for name in names
+                ):
 
-                            person_id = obj.get(
-                                "id"
-                            )
-
-                            matches.append({
-
-                                "id": person_id,
-
-                                "names": sorted(
-                                    names
-                                ),
-
-                            })
-
-                            break
+                    print(
+                        "Possible person:",
+                        sorted(names)
+                    )
 
             for value in obj.values():
 
@@ -2350,58 +2413,32 @@ def debug_person_search(
 
     walk(data)
 
-    # Remove duplicates
-    unique = []
-
-    seen = set()
-
-    for item in matches:
-
-        key = (
-            item.get("id"),
-            tuple(
-                item.get(
-                    "names",
-                    []
-                )
-            ),
-        )
-
-        if key in seen:
-            continue
-
-        seen.add(key)
-        unique.append(item)
-
-    for item in unique:
-
-        print(
-            f"ID: {item['id']}"
-        )
-
-        print(
-            "Names:"
-        )
-
-        for name in item["names"]:
-
-            print(
-                f"  - {name}"
-            )
-
-        print(
-            "-" * 50
-        )
-
+    print()
     print(
-        f"DEBUG MATCHES: {len(unique)}"
+        f"EXACT PEOPLE FOUND: {len(found_people)}"
     )
+
+    for person in found_people:
+
+        print(
+            "Names:",
+            sorted(
+                get_person_names(
+                    person
+                )
+            )
+        )
+
+        print(
+            "ID:",
+            person.get(
+                "id"
+            )
+        )
 
     print(
         "=" * 70
     )
-
-    return unique
 
 
 # ============================================================
@@ -2411,7 +2448,7 @@ def debug_person_search(
 async def test():
 
     # --------------------------------------------------------
-    # TEST CHENGXI HUANG
+    # CHANGE THIS TO TEST ANIMATOR
     # --------------------------------------------------------
 
     animator = "Chengxi Huang"
@@ -2420,52 +2457,52 @@ async def test():
 
         {
             "slug": "shingeki-no-kyojin",
-            "title": "Shingeki No Kyojin",
+            "title": "Attack on Titan",
         },
 
         {
             "slug": "shingeki-no-kyojin-season-2",
-            "title": "Shingeki No Kyojin Season 2",
+            "title": "Attack on Titan Season 2",
         },
 
         {
             "slug": "shingeki-no-kyojin-season-3",
-            "title": "Shingeki No Kyojin Season 3",
+            "title": "Attack on Titan Season 3",
         },
 
         {
             "slug": "shingeki-no-kyojin-season-3-part-2",
-            "title": "Shingeki No Kyojin Season 3 Part 2",
+            "title": "Attack on Titan Season 3 Part 2",
         },
 
         {
             "slug": "shingeki-no-kyojin-the-final-season",
-            "title": "Shingeki No Kyojin The Final Season",
+            "title": "Attack on Titan The Final Season",
         },
 
         {
             "slug": "shingeki-no-kyojin-the-final-season-part-2",
-            "title": "Shingeki No Kyojin The Final Season Part 2",
+            "title": "Attack on Titan The Final Season Part 2",
         },
 
         {
             "slug": "shingeki-no-kyojin-the-final-season-kanketsu-hen-zenpen",
-            "title": "Shingeki No Kyojin The Final Season Kanketsu Hen Zenpen",
+            "title": "Attack on Titan The Final Season Kanketsu Hen Zenpen",
         },
 
         {
             "slug": "shingeki-no-kyojin-the-final-season-kanketsu-hen-kouhen",
-            "title": "Shingeki No Kyojin The Final Season Kanketsu Hen Kouhen",
+            "title": "Attack on Titan The Final Season Kanketsu Hen Kouhen",
         },
 
         {
             "slug": "shingeki-no-kyojin-lost-girls",
-            "title": "Shingeki No Kyojin Lost Girls",
+            "title": "Attack on Titan Lost Girls",
         },
 
         {
             "slug": "shingeki-no-kyojin-ova",
-            "title": "Shingeki No Kyojin OVA",
+            "title": "Attack on Titan OVA",
         },
 
     ]
@@ -2480,16 +2517,7 @@ async def test():
     )
 
     print(
-        "=" * 70
-    )
-
-    print(
         f"SEARCHING: {animator}"
-    )
-
-    print(
-        f"SEARCH ALIASES: "
-        f"{sorted(get_search_aliases(animator))}"
     )
 
     print(
@@ -2500,10 +2528,6 @@ async def test():
         animator,
         anime_list,
     )
-
-    # ========================================================
-    # OUTPUT
-    # ========================================================
 
     print()
     print(
@@ -2525,22 +2549,6 @@ async def test():
         print(
             f"📺 {result['anime']}"
         )
-
-        print(
-            f"Slug: {result['slug']}"
-        )
-
-        print(
-            f"Source: {result['source']}"
-        )
-
-        if result.get(
-            "profile_url"
-        ):
-
-            print(
-                f"Profile: {result['profile_url']}"
-            )
 
         formatted = format_groups(
             result["groups"]
@@ -2571,3 +2579,4 @@ if __name__ == "__main__":
     asyncio.run(
         test()
     )
+
