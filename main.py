@@ -489,6 +489,82 @@ FRANCHISES = {
         ],
         "include_non_main": True,
     },
+
+    # --------------------------------------------------------
+# AOT: automatically include ALL Attack on Titan entries
+# including seasons, OVAs, movies, specials, etc.
+# --------------------------------------------------------
+
+if normalized_input in (
+    "aot",
+    "attack on titan",
+    "shingeki no kyojin",
+):
+
+    aot_keywords = [
+        "attack on titan",
+        "attack-on-titan",
+        "shingeki no kyojin",
+        "shingeki-no-kyojin",
+    ]
+
+    # ----------------------------------------------------
+    # Search anime_index.json
+    # ----------------------------------------------------
+
+    for name, slug in ANIME_INDEX.items():
+
+        normalized_name = normalize(name)
+        normalized_slug = normalize(slug)
+
+        if not normalized_name and not normalized_slug:
+            continue
+
+        matched = False
+
+        for keyword in aot_keywords:
+
+            keyword_normalized = normalize(keyword)
+
+            if (
+                keyword_normalized in normalized_name
+                or keyword_normalized in normalized_slug
+            ):
+                matched = True
+                break
+
+        if matched:
+            add_candidate(
+                slug,
+                allow_non_main=True,
+            )
+
+    # ----------------------------------------------------
+    # Search ALL local KFSL JSON files
+    # ----------------------------------------------------
+
+    for slug in get_local_anime_slugs():
+
+        normalized_slug = normalize(slug)
+
+        if not normalized_slug:
+            continue
+
+        matched = False
+
+        for keyword in aot_keywords:
+
+            keyword_normalized = normalize(keyword)
+
+            if keyword_normalized in normalized_slug:
+                matched = True
+                break
+
+        if matched:
+            add_candidate(
+                slug,
+                allow_non_main=True,
+            )
 }
 
 
@@ -632,36 +708,26 @@ def get_all_anime_seasons(anime):
     # HELPER
     # ========================================================
 
-    def add_candidate(
-        slug,
-        allow_non_main=True,
-    ):
+    def add_candidate(slug, allow_non_main=False):
 
-        if not slug:
-            return
+    if not slug:
+        return
 
-        slug = str(
-            slug
-        ).strip()
+    slug = str(slug).strip()
 
-        if not slug:
-            return
+    if not slug:
+        return
 
-        # ----------------------------------------------------
-        # For franchise searches we intentionally KEEP movies,
-        # OVAs and specials.
-        #
-        # They will only appear later if the animator is found.
-        # ----------------------------------------------------
+    # --------------------------------------------------------
+    # Exclude movies / OVAs / specials by default.
+    #
+    # If allow_non_main=True, include them.
+    # --------------------------------------------------------
 
-        if (
-            is_non_main_entry(slug)
-            and not allow_non_main
-        ):
+    if is_non_main_entry(slug) and not allow_non_main:
+        return
 
-            return
-
-        candidates[slug] = True
+    candidates[slug] = True
 
     # ========================================================
     # SPECIFIC SEASON NUMBER
