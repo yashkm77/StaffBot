@@ -489,66 +489,6 @@ FRANCHISES = {
         ],
         "include_non_main": True,
     },
-
-}
-
-    # ----------------------------------------------------
-    # Search anime_index.json
-    # ----------------------------------------------------
-
-    for name, slug in ANIME_INDEX.items():
-
-        normalized_name = normalize(name)
-        normalized_slug = normalize(slug)
-
-        if not normalized_name and not normalized_slug:
-            continue
-
-        matched = False
-
-        for keyword in aot_keywords:
-
-            keyword_normalized = normalize(keyword)
-
-            if (
-                keyword_normalized in normalized_name
-                or keyword_normalized in normalized_slug
-            ):
-                matched = True
-                break
-
-        if matched:
-            add_candidate(
-                slug,
-                allow_non_main=True,
-            )
-
-    # ----------------------------------------------------
-    # Search ALL local KFSL JSON files
-    # ----------------------------------------------------
-
-    for slug in get_local_anime_slugs():
-
-        normalized_slug = normalize(slug)
-
-        if not normalized_slug:
-            continue
-
-        matched = False
-
-        for keyword in aot_keywords:
-
-            keyword_normalized = normalize(keyword)
-
-            if keyword_normalized in normalized_slug:
-                matched = True
-                break
-
-        if matched:
-            add_candidate(
-                slug,
-                allow_non_main=True,
-            )
 }
 
 
