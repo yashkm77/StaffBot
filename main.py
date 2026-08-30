@@ -456,6 +456,33 @@ FRANCHISES = {
             "jojo no kimyou na bouken",
         ],
     },
+
+        "aot": {
+        "keywords": [
+            "attack on titan",
+            "shingeki no kyojin",
+            "shingeki-no-kyojin",
+            "進撃の巨人",
+        ],
+    },
+
+    "attack on titan": {
+        "keywords": [
+            "attack on titan",
+            "shingeki no kyojin",
+            "shingeki-no-kyojin",
+            "進撃の巨人",
+        ],
+    },
+
+    "shingeki no kyojin": {
+        "keywords": [
+            "attack on titan",
+            "shingeki no kyojin",
+            "shingeki-no-kyojin",
+            "進撃の巨人",
+        ],
+    },
 }
 
 
