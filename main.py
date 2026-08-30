@@ -464,6 +464,7 @@ FRANCHISES = {
             "shingeki-no-kyojin",
             "進撃の巨人",
         ],
+        "include_non_main": True,
     },
 
     "attack on titan": {
@@ -473,6 +474,7 @@ FRANCHISES = {
             "shingeki-no-kyojin",
             "進撃の巨人",
         ],
+        "include_non_main": True,
     },
 
     "shingeki no kyojin": {
@@ -482,6 +484,7 @@ FRANCHISES = {
             "shingeki-no-kyojin",
             "進撃の巨人",
         ],
+        "include_non_main": True,
     },
 }
 
@@ -567,8 +570,17 @@ def get_all_anime_seasons(anime):
         if not slug:
             return
 
+        # Movies / OVAs / specials are normally excluded.
+        # Attack on Titan is explicitly allowed to include them.
+        # They are still filtered later by get_animator_works_all(),
+        # so a movie only appears when the animator actually has
+        # a credit in that movie's JSON.
         if is_non_main_entry(slug):
-            return
+            if not franchise or not franchise.get(
+                "include_non_main",
+                False,
+            ):
+                return
 
         candidates[slug] = True
 
