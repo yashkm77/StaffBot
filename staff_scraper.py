@@ -502,7 +502,166 @@ ANIME_ALIASES = {
     "lwa enchanted parade":
         "little-witch-academia-the-enchanted-parade",
 
+        # --------------------------------------------------------
+    # Attack on Titan
+    # --------------------------------------------------------
 
+    # Season 1
+    "aot":
+        "shingeki-no-kyojin",
+
+    "attack on titan":
+        "shingeki-no-kyojin",
+
+    "shingeki no kyojin":
+        "shingeki-no-kyojin",
+
+    "aot s1":
+        "shingeki-no-kyojin",
+
+    "aot season 1":
+        "shingeki-no-kyojin",
+
+    "attack on titan s1":
+        "shingeki-no-kyojin",
+
+    "attack on titan season 1":
+        "shingeki-no-kyojin",
+
+    "shingeki no kyojin s1":
+        "shingeki-no-kyojin",
+
+    # Season 2
+    "aot s2":
+        "shingeki-no-kyojin-season-2",
+
+    "aot season 2":
+        "shingeki-no-kyojin-season-2",
+
+    "attack on titan s2":
+        "shingeki-no-kyojin-season-2",
+
+    "attack on titan season 2":
+        "shingeki-no-kyojin-season-2",
+
+    "shingeki no kyojin s2":
+        "shingeki-no-kyojin-season-2",
+
+    "shingeki no kyojin season 2":
+        "shingeki-no-kyojin-season-2",
+
+    # Season 3
+    "aot s3":
+        "shingeki-no-kyojin-season-3",
+
+    "aot season 3":
+        "shingeki-no-kyojin-season-3",
+
+    "attack on titan s3":
+        "shingeki-no-kyojin-season-3",
+
+    "attack on titan season 3":
+        "shingeki-no-kyojin-season-3",
+
+    "shingeki no kyojin s3":
+        "shingeki-no-kyojin-season-3",
+
+    "shingeki no kyojin season 3":
+        "shingeki-no-kyojin-season-3",
+
+    # Season 3 Part 2
+    "aot s3 p2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "aot s3 part 2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "aot season 3 part 2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "attack on titan s3 p2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "attack on titan s3 part 2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "shingeki no kyojin s3 p2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    "shingeki no kyojin s3 part 2":
+        "shingeki-no-kyojin-season-3-part-2",
+
+    # Final Season
+    "aot s4":
+        "shingeki-no-kyojin-the-final-season",
+
+    "aot season 4":
+        "shingeki-no-kyojin-the-final-season",
+
+    "aot final":
+        "shingeki-no-kyojin-the-final-season",
+
+    "aot final season":
+        "shingeki-no-kyojin-the-final-season",
+
+    "attack on titan s4":
+        "shingeki-no-kyojin-the-final-season",
+
+    "attack on titan final":
+        "shingeki-no-kyojin-the-final-season",
+
+    "attack on titan final season":
+        "shingeki-no-kyojin-the-final-season",
+
+    "shingeki no kyojin s4":
+        "shingeki-no-kyojin-the-final-season",
+
+    "shingeki no kyojin final":
+        "shingeki-no-kyojin-the-final-season",
+
+    # Final Season Part 2
+    "aot s4 p2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    "aot s4 part 2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    "aot final p2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    "aot final part 2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    "attack on titan s4 p2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    "attack on titan final part 2":
+        "shingeki-no-kyojin-the-final-season-part-2",
+
+    # Final Season Specials
+    "aot final special 1":
+        "shingeki-no-kyojin-the-final-season-kanketsu-hen-zenpen",
+
+    "aot final special 2":
+        "shingeki-no-kyojin-the-final-season-kanketsu-hen-kouhen",
+
+    "aot special 1":
+        "shingeki-no-kyojin-the-final-season-kanketsu-hen-zenpen",
+
+    "aot special 2":
+        "shingeki-no-kyojin-the-final-season-kanketsu-hen-kouhen",
+
+    # OVA
+    "aot ova":
+        "shingeki-no-kyojin-ova",
+
+    "attack on titan ova":
+        "shingeki-no-kyojin-ova",
+
+    "shingeki no kyojin ova":
+        "shingeki-no-kyojin-ova",
+
+    
     # --------------------------------------------------------
     # Other
     # --------------------------------------------------------
