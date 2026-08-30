@@ -213,6 +213,7 @@ def get_anime_slug(anime):
         ):
 
             if alias:
+
                 return str(
                     sorted(alias)[0]
                 ).strip()
@@ -264,26 +265,6 @@ def get_season_number(slug):
             pass
 
     # --------------------------------------------------------
-    # Numeric suffix such as:
-    #
-    # my hero academia 3
-    # --------------------------------------------------------
-
-    match = re.search(
-        r"\s(\d+)$",
-        text,
-    )
-
-    if match:
-
-        try:
-            return int(
-                match.group(1)
-            )
-        except ValueError:
-            pass
-
-    # --------------------------------------------------------
     # Season X
     # --------------------------------------------------------
 
@@ -302,8 +283,25 @@ def get_season_number(slug):
             pass
 
     # --------------------------------------------------------
-    # Original season
+    # Numeric suffix
+    #
+    # Example:
+    # my hero academia 3
     # --------------------------------------------------------
+
+    match = re.search(
+        r"\s(\d+)$",
+        text,
+    )
+
+    if match:
+
+        try:
+            return int(
+                match.group(1)
+            )
+        except ValueError:
+            pass
 
     return 1
 
@@ -349,7 +347,7 @@ def get_local_anime_slugs():
 
 
 # ============================================================
-# FRANCHISE EXCLUSIONS
+# FRANCHISE NON-MAIN DETECTION
 # ============================================================
 
 def is_non_main_entry(slug):
@@ -358,10 +356,11 @@ def is_non_main_entry(slug):
         str(slug)
     )
 
-    excluded_terms = [
+    non_main_terms = [
 
         # Movies
         "movie",
+        "movies",
         "film",
 
         # OVAs / specials
@@ -377,24 +376,17 @@ def is_non_main_entry(slug):
 
         # Recaps / compilations
         "recap",
+        "recap movie",
         "compilation",
 
-        # Spin-offs
-        "vigilantes",
-
-        # MHA movies
-        "heroes rising",
-        "you re next",
-        "ua battle heroes",
-
-        # Other obvious side material
-        "phantom parade",
+        # Common side material
+        "picture drama",
 
     ]
 
     return any(
         term in text
-        for term in excluded_terms
+        for term in non_main_terms
     )
 
 
@@ -410,6 +402,7 @@ FRANCHISES = {
             "jujutsu-kaisen",
             "呪術廻戦",
         ],
+        "include_non_main": True,
     },
 
     "jujutsu kaisen": {
@@ -418,34 +411,43 @@ FRANCHISES = {
             "jujutsu-kaisen",
             "呪術廻戦",
         ],
+        "include_non_main": True,
     },
 
     "mha": {
         "keywords": [
             "my hero academia",
             "boku no hero academia",
+            "my-hero-academia",
         ],
+        "include_non_main": True,
     },
 
     "bnha": {
         "keywords": [
             "my hero academia",
             "boku no hero academia",
+            "my-hero-academia",
         ],
+        "include_non_main": True,
     },
 
     "my hero academia": {
         "keywords": [
             "my hero academia",
             "boku no hero academia",
+            "my-hero-academia",
         ],
+        "include_non_main": True,
     },
 
     "boku no hero academia": {
         "keywords": [
             "my hero academia",
             "boku no hero academia",
+            "my-hero-academia",
         ],
+        "include_non_main": True,
     },
 
     "jojo": {
@@ -455,9 +457,10 @@ FRANCHISES = {
             "jojo s bizarre adventure",
             "jojo no kimyou na bouken",
         ],
+        "include_non_main": True,
     },
 
-        "aot": {
+    "aot": {
         "keywords": [
             "attack on titan",
             "shingeki no kyojin",
@@ -490,7 +493,7 @@ FRANCHISES = {
 
 
 # ============================================================
-# MATCH FRANCHISE SLUG
+# MATCH FRANCHISE
 # ============================================================
 
 def slug_matches_franchise(
@@ -514,10 +517,7 @@ def slug_matches_franchise(
         if not normalized_keyword:
             continue
 
-        if (
-            normalized_keyword
-            in normalized_slug
-        ):
+        if normalized_keyword in normalized_slug:
 
             return True
 
@@ -525,24 +525,90 @@ def slug_matches_franchise(
 
 
 # ============================================================
-# GET ALL ANIME SEASONS
+# GET ENTRY TYPE
+# ============================================================
+
+def get_entry_type(slug):
+
+    text = normalize(
+        str(slug)
+    )
+
+    # --------------------------------------------------------
+    # Movie
+    # --------------------------------------------------------
+
+    if any(
+        x in text
+        for x in (
+            "movie",
+            "film",
+        )
+    ):
+
+        return "MOVIE"
+
+    # --------------------------------------------------------
+    # OVA
+    # --------------------------------------------------------
+
+    if "ova" in text:
+
+        return "OVA"
+
+    # --------------------------------------------------------
+    # Special
+    # --------------------------------------------------------
+
+    if (
+        "special" in text
+        or "ona" in text
+    ):
+
+        return "SPECIAL"
+
+    # --------------------------------------------------------
+    # Final season
+    # --------------------------------------------------------
+
+    if "final season" in text:
+
+        return "SEASON"
+
+    # --------------------------------------------------------
+    # Normal season
+    # --------------------------------------------------------
+
+    return "SEASON"
+
+
+# ============================================================
+# GET ALL ANIME SEASONS / MOVIES
 # ============================================================
 
 def get_all_anime_seasons(anime):
+
     """
-    Find all relevant KFSL anime slugs.
+    Find ALL KFSL entries belonging to an anime franchise.
 
-    Examples:
+    This includes:
 
-        jjk
-        jujutsu kaisen
+        Seasons
+        Parts
+        Movies
+        OVAs
+        Specials
 
-        mha
-        my hero academia
+    Example:
 
-        my hero academia 3
+        /work aot animator
 
-        jjk 3
+    searches every matching Attack on Titan KFSL entry.
+
+    IMPORTANT:
+
+    Movies/specials are NOT displayed unless the animator
+    actually has a credit in that entry.
     """
 
     normalized_input = normalize(
@@ -555,10 +621,21 @@ def get_all_anime_seasons(anime):
     candidates = {}
 
     # ========================================================
+    # DETECT FRANCHISE
+    # ========================================================
+
+    franchise = FRANCHISES.get(
+        normalized_input
+    )
+
+    # ========================================================
     # HELPER
     # ========================================================
 
-    def add_candidate(slug):
+    def add_candidate(
+        slug,
+        allow_non_main=True,
+    ):
 
         if not slug:
             return
@@ -570,22 +647,24 @@ def get_all_anime_seasons(anime):
         if not slug:
             return
 
-        # Movies / OVAs / specials are normally excluded.
-        # Attack on Titan is explicitly allowed to include them.
-        # They are still filtered later by get_animator_works_all(),
-        # so a movie only appears when the animator actually has
-        # a credit in that movie's JSON.
-        if is_non_main_entry(slug):
-            if not franchise or not franchise.get(
-                "include_non_main",
-                False,
-            ):
-                return
+        # ----------------------------------------------------
+        # For franchise searches we intentionally KEEP movies,
+        # OVAs and specials.
+        #
+        # They will only appear later if the animator is found.
+        # ----------------------------------------------------
+
+        if (
+            is_non_main_entry(slug)
+            and not allow_non_main
+        ):
+
+            return
 
         candidates[slug] = True
 
     # ========================================================
-    # DETECT SPECIFIC SEASON NUMBER
+    # SPECIFIC SEASON NUMBER
     # ========================================================
 
     specific_match = re.search(
@@ -602,22 +681,10 @@ def get_all_anime_seasons(anime):
         )
 
     # ========================================================
-    # DETECT FRANCHISE
-    # ========================================================
-
-    franchise = FRANCHISES.get(
-        normalized_input
-    )
-
-    # ========================================================
     # SPECIFIC SEASON SEARCH
     # ========================================================
 
     if requested_number is not None:
-
-        # ----------------------------------------------------
-        # Remove season number from query.
-        # ----------------------------------------------------
 
         query_without_number = re.sub(
             r"\b(?:season|s|part|p)?\s*\d+\b",
@@ -626,7 +693,17 @@ def get_all_anime_seasons(anime):
         ).strip()
 
         # ----------------------------------------------------
-        # Exact index matches
+        # Detect franchise from base query
+        # ----------------------------------------------------
+
+        if not franchise:
+
+            franchise = FRANCHISES.get(
+                query_without_number
+            )
+
+        # ----------------------------------------------------
+        # Exact match
         # ----------------------------------------------------
 
         exact_matches = (
@@ -638,10 +715,13 @@ def get_all_anime_seasons(anime):
 
         for slug in exact_matches:
 
-            add_candidate(slug)
+            add_candidate(
+                slug,
+                allow_non_main=False,
+            )
 
         # ----------------------------------------------------
-        # Search anime_index
+        # anime_index search
         # ----------------------------------------------------
 
         for name, slug in ANIME_INDEX.items():
@@ -657,47 +737,46 @@ def get_all_anime_seasons(anime):
             if not normalized_name:
                 continue
 
-            # The base franchise must match.
-            if query_without_number:
+            # ------------------------------------------------
+            # Base franchise matching
+            # ------------------------------------------------
 
-                base_matches = False
+            base_matches = False
 
-                # Franchise query
-                if franchise:
+            if franchise:
 
-                    for keyword in franchise["keywords"]:
+                for keyword in franchise["keywords"]:
 
-                        normalized_keyword = normalize(
-                            keyword
-                        )
-
-                        if (
-                            normalized_keyword
-                            in normalized_name
-                            or normalized_keyword
-                            in normalized_slug
-                        ):
-
-                            base_matches = True
-                            break
-
-                # Normal query
-                else:
+                    normalized_keyword = normalize(
+                        keyword
+                    )
 
                     if (
-                        query_without_number
+                        normalized_keyword
                         in normalized_name
-                        or query_without_number
+                        or normalized_keyword
                         in normalized_slug
                     ):
 
                         base_matches = True
+                        break
 
-                if not base_matches:
-                    continue
+            else:
+
+                if (
+                    query_without_number
+                    in normalized_name
+                    or query_without_number
+                    in normalized_slug
+                ):
+
+                    base_matches = True
+
+            if not base_matches:
+                continue
 
             # ------------------------------------------------
-            # Determine season number from slug/name.
+            # Determine season number
             # ------------------------------------------------
 
             combined = (
@@ -706,7 +785,7 @@ def get_all_anime_seasons(anime):
                 + normalized_slug
             )
 
-            number_matches = [
+            patterns = [
 
                 rf"\b{requested_number}(?:st|nd|rd|th)?\s+season\b",
 
@@ -718,28 +797,29 @@ def get_all_anime_seasons(anime):
 
             ]
 
-            if any(
+            if not any(
                 re.search(
                     pattern,
                     combined,
                 )
-                for pattern in number_matches
+                for pattern in patterns
             ):
 
-                # Avoid matching unrelated numbers.
-                detected_season = get_season_number(
-                    slug
+                continue
+
+            detected_season = get_season_number(
+                slug
+            )
+
+            if detected_season == requested_number:
+
+                add_candidate(
+                    slug,
+                    allow_non_main=False,
                 )
 
-                if (
-                    detected_season
-                    == requested_number
-                ):
-
-                    add_candidate(slug)
-
         # ----------------------------------------------------
-        # Search local JSON filenames.
+        # Local files
         # ----------------------------------------------------
 
         for slug in get_local_anime_slugs():
@@ -754,6 +834,7 @@ def get_all_anime_seasons(anime):
                     slug,
                     franchise["keywords"],
                 ):
+
                     continue
 
             else:
@@ -762,25 +843,25 @@ def get_all_anime_seasons(anime):
                     query_without_number
                     not in normalized_slug
                 ):
+
                     continue
 
             detected_season = get_season_number(
                 slug
             )
 
-            if (
-                detected_season
-                == requested_number
-            ):
+            if detected_season != requested_number:
+                continue
 
-                add_candidate(slug)
-
-        # ----------------------------------------------------
-        # Specific query is done.
-        # ----------------------------------------------------
+            add_candidate(
+                slug,
+                allow_non_main=False,
+            )
 
         return sort_anime_slugs(
-            list(candidates.keys())
+            list(
+                candidates.keys()
+            )
         )
 
     # ========================================================
@@ -795,6 +876,9 @@ def get_all_anime_seasons(anime):
 
         # ----------------------------------------------------
         # A. anime_index.json
+        #
+        # IMPORTANT:
+        # Do NOT exclude movies here.
         # ----------------------------------------------------
 
         for name, slug in ANIME_INDEX.items():
@@ -831,10 +915,16 @@ def get_all_anime_seasons(anime):
             if not matched:
                 continue
 
-            add_candidate(slug)
+            add_candidate(
+                slug,
+                allow_non_main=True,
+            )
 
         # ----------------------------------------------------
-        # B. Local KFSL JSON filenames
+        # B. Local KFSL JSON files
+        #
+        # IMPORTANT:
+        # Movies are included.
         # ----------------------------------------------------
 
         for slug in get_local_anime_slugs():
@@ -843,16 +933,16 @@ def get_all_anime_seasons(anime):
                 slug,
                 keywords,
             ):
+
                 continue
 
-            add_candidate(slug)
+            add_candidate(
+                slug,
+                allow_non_main=True,
+            )
 
         # ----------------------------------------------------
-        # C. IMPORTANT:
-        #
-        # For JJK and MHA, explicitly make sure canonical
-        # seasons are recognized even if anime_index has
-        # incomplete naming.
+        # C. Canonical JJK seasons
         # ----------------------------------------------------
 
         if normalized_input in (
@@ -874,8 +964,6 @@ def get_all_anime_seasons(anime):
 
             for slug in canonical_jjk:
 
-                # Only add if the actual local JSON exists
-                # OR the slug exists in anime_index.
                 exists_in_index = any(
                     str(indexed_slug).strip()
                     == slug
@@ -893,7 +981,14 @@ def get_all_anime_seasons(anime):
                     or exists_locally
                 ):
 
-                    add_candidate(slug)
+                    add_candidate(
+                        slug,
+                        allow_non_main=True,
+                    )
+
+        # ----------------------------------------------------
+        # D. Canonical MHA seasons
+        # ----------------------------------------------------
 
         elif normalized_input in (
             "mha",
@@ -941,23 +1036,20 @@ def get_all_anime_seasons(anime):
                     or exists_locally
                 ):
 
-                    add_candidate(slug)
-
-        # ----------------------------------------------------
-        # Return franchise results.
-        # ----------------------------------------------------
+                    add_candidate(
+                        slug,
+                        allow_non_main=True,
+                    )
 
         return sort_anime_slugs(
-            list(candidates.keys())
+            list(
+                candidates.keys()
+            )
         )
 
     # ========================================================
     # NORMAL SEARCH
     # ========================================================
-
-    # --------------------------------------------------------
-    # Exact anime_index match
-    # --------------------------------------------------------
 
     exact_matches = (
         ANIME_INDEX_NORMALIZED.get(
@@ -968,7 +1060,10 @@ def get_all_anime_seasons(anime):
 
     for slug in exact_matches:
 
-        add_candidate(slug)
+        add_candidate(
+            slug,
+            allow_non_main=True,
+        )
 
     # --------------------------------------------------------
     # Manual alias
@@ -987,11 +1082,17 @@ def get_all_anime_seasons(anime):
 
             for slug in alias:
 
-                add_candidate(slug)
+                add_candidate(
+                    slug,
+                    allow_non_main=True,
+                )
 
         else:
 
-            add_candidate(alias)
+            add_candidate(
+                alias,
+                allow_non_main=True,
+            )
 
     # --------------------------------------------------------
     # Containment fallback
@@ -1021,7 +1122,10 @@ def get_all_anime_seasons(anime):
                 in normalized_input
             ):
 
-                add_candidate(slug)
+                add_candidate(
+                    slug,
+                    allow_non_main=True,
+                )
 
     # --------------------------------------------------------
     # Local filename fallback
@@ -1042,11 +1146,14 @@ def get_all_anime_seasons(anime):
                 in normalized_input
             ):
 
-                add_candidate(slug)
+                add_candidate(
+                    slug,
+                    allow_non_main=True,
+                )
 
-    # ========================================================
-    # FINAL FALLBACK
-    # ========================================================
+    # --------------------------------------------------------
+    # Final fallback
+    # --------------------------------------------------------
 
     if not candidates:
 
@@ -1057,11 +1164,14 @@ def get_all_anime_seasons(anime):
         if fallback:
 
             add_candidate(
-                fallback
+                fallback,
+                allow_non_main=True,
             )
 
     return sort_anime_slugs(
-        list(candidates.keys())
+        list(
+            candidates.keys()
+        )
     )
 
 
@@ -1077,79 +1187,125 @@ def sort_anime_slugs(slugs):
             str(slug)
         )
 
+        entry_type = get_entry_type(
+            slug
+        )
+
         # ----------------------------------------------------
-        # Original series
+        # Main seasons first
         # ----------------------------------------------------
 
-        if text in (
-            "jujutsu kaisen",
-            "my hero academia",
-        ):
+        if entry_type == "SEASON":
+
+            # Original
+            if text in (
+                "jujutsu kaisen",
+                "my hero academia",
+                "attack on titan",
+                "shingeki no kyojin",
+            ):
+
+                return (
+                    0,
+                    1,
+                    text,
+                )
+
+            # Ordinal season
+            match = re.search(
+                r"\b(\d+)(?:st|nd|rd|th)\s+season\b",
+                text,
+            )
+
+            if match:
+
+                return (
+                    0,
+                    int(
+                        match.group(1)
+                    ),
+                    text,
+                )
+
+            # Numeric season
+            match = re.search(
+                r"\s(\d+)$",
+                text,
+            )
+
+            if match:
+
+                return (
+                    0,
+                    int(
+                        match.group(1)
+                    ),
+                    text,
+                )
+
+            # Final season
+            if "final season" in text:
+
+                return (
+                    0,
+                    999,
+                    text,
+                )
 
             return (
                 0,
+                500,
+                text,
+            )
+
+        # ----------------------------------------------------
+        # Movies after seasons
+        # ----------------------------------------------------
+
+        if entry_type == "MOVIE":
+
+            return (
                 1,
+                9999,
                 text,
             )
 
         # ----------------------------------------------------
-        # Explicit ordinal seasons
+        # OVAs
         # ----------------------------------------------------
 
-        match = re.search(
-            r"\b(\d+)(?:st|nd|rd|th)\s+season\b",
-            text,
-        )
-
-        if match:
+        if entry_type == "OVA":
 
             return (
-                0,
-                int(match.group(1)),
+                2,
+                9999,
                 text,
             )
 
         # ----------------------------------------------------
-        # Numeric MHA style
+        # Specials
         # ----------------------------------------------------
 
-        match = re.search(
-            r"\s(\d+)$",
-            text,
-        )
-
-        if match:
+        if entry_type == "SPECIAL":
 
             return (
-                0,
-                int(match.group(1)),
+                3,
+                9999,
                 text,
             )
-
-        # ----------------------------------------------------
-        # Final season
-        # ----------------------------------------------------
-
-        if "final season" in text:
-
-            return (
-                0,
-                999,
-                text,
-            )
-
-        # ----------------------------------------------------
-        # Everything else
-        # ----------------------------------------------------
 
         return (
-            1,
+            4,
             9999,
             text,
         )
 
     return sorted(
-        list(dict.fromkeys(slugs)),
+        list(
+            dict.fromkeys(
+                slugs
+            )
+        ),
         key=sort_key,
     )
 
@@ -1159,10 +1315,6 @@ def sort_anime_slugs(slugs):
 # ============================================================
 
 def get_anime_display_title(slug):
-
-    # --------------------------------------------------------
-    # Known titles
-    # --------------------------------------------------------
 
     known_titles = {
 
@@ -1225,7 +1377,7 @@ def get_anime_display_title(slug):
         ]
 
     # --------------------------------------------------------
-    # Try anime_index
+    # Search anime_index for a human-readable name
     # --------------------------------------------------------
 
     possible_names = []
@@ -1236,6 +1388,7 @@ def get_anime_display_title(slug):
             str(indexed_slug).strip()
             != str(slug).strip()
         ):
+
             continue
 
         if re.search(
@@ -1304,7 +1457,10 @@ def split_text(
 ):
 
     if len(text) <= limit:
-        return [text]
+
+        return [
+            text
+        ]
 
     parts = []
 
@@ -1345,6 +1501,7 @@ def split_text(
             current = piece
 
     if current:
+
         parts.append(
             current
         )
@@ -1642,18 +1799,6 @@ async def staff(
         color=EMBED_COLOR,
     )
 
-    # ========================================================
-    # ADD STAFF FIELDS SAFELY
-    #
-    # Discord limits:
-    #   - Each field value: 1024 characters
-    #   - Each embed: 25 fields
-    #   - Total embed text: 6000 characters
-    #
-    # Large productions/movies can easily exceed the field limit,
-    # so every role is split automatically.
-    # ========================================================
-
     staff_fields = [
         ("🎬 Storyboard", data.get("SB", [])),
         ("🎞️ Episode Director", data.get("ED", [])),
@@ -1665,8 +1810,6 @@ async def staff(
         ("🎵 Artist", data.get("Artist", [])),
     ]
 
-    # Build field entries first so they can be distributed across
-    # multiple embeds when the whole staff list is very large.
     prepared_fields = []
 
     for field_name, names in staff_fields:
@@ -1674,22 +1817,37 @@ async def staff(
         if not names:
             continue
 
-        value = format_names(names)
+        value = format_names(
+            names
+        )
 
         if not value:
             continue
 
-        chunks = split_text(value, 1024)
+        chunks = split_text(
+            value,
+            1024,
+        )
 
-        for index, chunk in enumerate(chunks):
+        for index, chunk in enumerate(
+            chunks
+        ):
 
             if index == 0:
+
                 current_name = field_name
+
             else:
-                current_name = f"{field_name} (continued)"
+
+                current_name = (
+                    f"{field_name} (continued)"
+                )
 
             prepared_fields.append(
-                (current_name, chunk)
+                (
+                    current_name,
+                    chunk,
+                )
             )
 
     if data.get("2KA"):
@@ -1701,25 +1859,32 @@ async def staff(
             )
         )
 
-    # --------------------------------------------------------
-    # Create one or more embeds.
-    #
-    # We keep both Discord limits safe:
-    #   maximum 25 fields
-    #   maximum 6000 characters
-    # --------------------------------------------------------
-
     embeds = []
+
     current_embed = embed
+
     current_field_count = 0
-    current_total_chars = len(embed.title or "") + len(embed.description or "")
+
+    current_total_chars = (
+        len(
+            embed.title
+            or ""
+        )
+        +
+        len(
+            embed.description
+            or ""
+        )
+    )
 
     for field_name, value in prepared_fields:
 
-        field_chars = len(field_name) + len(value)
+        field_chars = (
+            len(field_name)
+            +
+            len(value)
+        )
 
-        # Start a new embed if adding this field would exceed
-        # either the 25-field limit or the 6000-character limit.
         if (
             current_field_count >= 25
             or current_total_chars + field_chars > 5900
@@ -1729,7 +1894,9 @@ async def staff(
                 text="Sakuga Staff • KeyFrame / KFSL dataset"
             )
 
-            embeds.append(current_embed)
+            embeds.append(
+                current_embed
+            )
 
             current_embed = discord.Embed(
                 title=title,
@@ -1742,9 +1909,17 @@ async def staff(
             )
 
             current_field_count = 0
+
             current_total_chars = (
-                len(current_embed.title or "")
-                + len(current_embed.description or "")
+                len(
+                    current_embed.title
+                    or ""
+                )
+                +
+                len(
+                    current_embed.description
+                    or ""
+                )
             )
 
         current_embed.add_field(
@@ -1754,21 +1929,23 @@ async def staff(
         )
 
         current_field_count += 1
+
         current_total_chars += field_chars
 
     current_embed.set_footer(
         text="Sakuga Staff • KeyFrame / KFSL dataset"
     )
 
-    embeds.append(current_embed)
+    embeds.append(
+        current_embed
+    )
 
-    # --------------------------------------------------------
-    # Send all pages.
-    # --------------------------------------------------------
-
-    for page_index, page_embed in enumerate(embeds):
+    for page_index, page_embed in enumerate(
+        embeds
+    ):
 
         if len(embeds) > 1:
+
             page_embed.set_footer(
                 text=(
                     "Sakuga Staff • KeyFrame / KFSL dataset"
@@ -1821,7 +1998,7 @@ async def work(
         return
 
     # ========================================================
-    # FIND ALL SEASONS
+    # FIND ALL FRANCHISE ENTRIES
     # ========================================================
 
     season_slugs = get_all_anime_seasons(
@@ -1853,7 +2030,7 @@ async def work(
     print()
 
     print(
-        "=" * 60
+        "=" * 70
     )
 
     print(
@@ -1861,7 +2038,7 @@ async def work(
     )
 
     print(
-        "=" * 60
+        "=" * 70
     )
 
     print(
@@ -1872,8 +2049,10 @@ async def work(
         f"Animator: {animator}"
     )
 
+    print()
+
     print(
-        "Seasons:"
+        "KFSL entries that will be checked:"
     )
 
     for item in anime_list:
@@ -1884,11 +2063,11 @@ async def work(
         )
 
     print(
-        "=" * 60
+        "=" * 70
     )
 
     # ========================================================
-    # LOOK UP ALL SEASONS
+    # LOOK UP ANIMATOR IN EVERY ENTRY
     # ========================================================
 
     try:
@@ -1924,7 +2103,8 @@ async def work(
             ),
             description=(
                 "No work found for this animator "
-                "in the detected anime seasons."
+                "in the detected anime seasons, "
+                "movies, OVAs, or specials."
             ),
             color=EMBED_COLOR,
         )
@@ -1951,20 +2131,41 @@ async def work(
     )
 
     # ========================================================
-    # CREATE EMBED
+    # PREPARE EMBEDS
     # ========================================================
 
-    embed = discord.Embed(
-        title=display_name,
-        description=(
-            f"**{anime}**\n"
-            "Animator work across all detected seasons"
-        ),
-        color=EMBED_COLOR,
+    embeds = []
+
+    def create_base_embed():
+
+        return discord.Embed(
+            title=display_name,
+            description=(
+                f"**{anime}**\n"
+                "Animator work across seasons, "
+                "movies & other KFSL entries"
+            ),
+            color=EMBED_COLOR,
+        )
+
+    embed = create_base_embed()
+
+    current_field_count = 0
+
+    current_total_chars = (
+        len(
+            embed.title
+            or ""
+        )
+        +
+        len(
+            embed.description
+            or ""
+        )
     )
 
     # ========================================================
-    # BUILD EACH SEASON
+    # BUILD EACH RESULT
     # ========================================================
 
     for season_result in season_results:
@@ -1974,6 +2175,11 @@ async def work(
                 "anime"
             )
             or "Unknown Anime"
+        )
+
+        slug = season_result.get(
+            "slug",
+            "",
         )
 
         groups = season_result.get(
@@ -2107,8 +2313,32 @@ async def work(
         if not season_text_parts:
             continue
 
+        # ====================================================
+        # ENTRY TYPE LABEL
+        # ====================================================
+
+        entry_type = get_entry_type(
+            slug
+        )
+
+        if entry_type == "MOVIE":
+
+            field_prefix = "🎬"
+
+        elif entry_type == "OVA":
+
+            field_prefix = "📀"
+
+        elif entry_type == "SPECIAL":
+
+            field_prefix = "⭐"
+
+        else:
+
+            field_prefix = "📺"
+
         # ----------------------------------------------------
-        # ADD SEASON FIELD
+        # Build text
         # ----------------------------------------------------
 
         season_text = "\n\n".join(
@@ -2127,59 +2357,116 @@ async def work(
             if index == 0:
 
                 field_name = (
-                    f"📺 {anime_title}"
+                    f"{field_prefix} "
+                    f"{anime_title}"
                 )
 
             else:
 
                 field_name = (
-                    f"📺 {anime_title} "
+                    f"{field_prefix} "
+                    f"{anime_title} "
                     "(continued)"
                 )
 
+            field_chars = (
+                len(field_name)
+                +
+                len(chunk)
+            )
+
+            # ------------------------------------------------
+            # Discord embed limits
+            # ------------------------------------------------
+
+            if (
+                current_field_count >= 25
+                or current_total_chars + field_chars > 5900
+            ):
+
+                embed.set_footer(
+                    text=(
+                        "Sakuga Staff • "
+                        "KeyFrame / KFSL dataset"
+                    )
+                )
+
+                embeds.append(
+                    embed
+                )
+
+                embed = create_base_embed()
+
+                current_field_count = 0
+
+                current_total_chars = (
+                    len(
+                        embed.title
+                        or ""
+                    )
+                    +
+                    len(
+                        embed.description
+                        or ""
+                    )
+                )
+
             embed.add_field(
-                name=field_name,
-                value=chunk,
+                name=field_name[:256],
+                value=chunk[:1024],
                 inline=False,
             )
 
+            current_field_count += 1
+
+            current_total_chars += field_chars
+
     # ========================================================
-    # FOOTER
+    # ADD LAST EMBED
     # ========================================================
 
-    embed.set_footer(
-        text="Sakuga Staff • KeyFrame / KFSL dataset"
-    )
+    if current_field_count > 0:
+
+        embed.set_footer(
+            text=(
+                "Sakuga Staff • "
+                "KeyFrame / KFSL dataset"
+            )
+        )
+
+        embeds.append(
+            embed
+        )
 
     # ========================================================
     # SEND
     # ========================================================
 
-    try:
+    if not embeds:
 
         await interaction.followup.send(
-            embed=embed
+            "❌ No displayable work was found."
         )
 
-    except discord.HTTPException as e:
+        return
 
-        print(
-            f"WORK EMBED ERROR: {e!r}"
+    for page_index, page_embed in enumerate(
+        embeds
+    ):
+
+        if len(embeds) > 1:
+
+            page_embed.set_footer(
+                text=(
+                    "Sakuga Staff • "
+                    "KeyFrame / KFSL dataset"
+                    f" • Page {page_index + 1}/{len(embeds)}"
+                )
+            )
+
+        await interaction.followup.send(
+            embed=page_embed
         )
-
-        try:
-
-            await interaction.followup.send(
-                "❌ The work list was too large "
-                "to display in the embed."
-            )
-
-        except Exception as followup_error:
-
-            print(
-                f"FOLLOWUP ERROR: "
-                f"{followup_error!r}"
-            )
 
 
 # ============================================================
