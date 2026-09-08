@@ -1077,26 +1077,26 @@ def get_all_anime_seasons(anime):
                  "bleach-thousand-year-blood-war-the-separation",
                  "bleach-thousand-year-blood-war-the-conflict",
                  "bleach-thousand-year-blood-war-the-calamity",
-       ]
+             ]
 
-       local_slugs = set(
-           get_local_anime_slugs()
-       )
+             local_slugs = set(
+                 get_local_anime_slugs()
+             )
 
-       indexed_slugs = {
-           str(x).strip()
-           for x in ANIME_INDEX.values()
-       }
+             indexed_slugs = {
+                 str(x).strip()
+                 for x in ANIME_INDEX.values()
+             }
 
-       for slug in canonical_tybw:
-           if (
-               slug in indexed_slugs
-               or slug in local_slugs
-           ):
-               add_candidate(
-                   slug,
-                   allow_non_main=False,
-               )
+             for slug in canonical_tybw:
+                 if (
+                     slug in indexed_slugs
+                     or slug in local_slugs
+                 ):
+                     add_candidate(
+                         slug,
+                         allow_non_main=False,
+                     )
             
 
         # ----------------------------------------------------
