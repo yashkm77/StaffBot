@@ -489,6 +489,23 @@ FRANCHISES = {
         ],
         "include_non_main": True,
     },
+
+    "tybw": {
+        "keywords": [
+            "bleach thousand year blood war",
+            "bleach-thousand-year-blood-war",
+        ],
+        "include_non_main": False,
+    },
+
+    "bleach tybw": {
+        "keywords": [
+            "bleach thousand year blood war",
+            "bleach-thousand-year-blood-war",
+        ],
+        "include_non_main": False,
+    },
+    
 }
 
 
@@ -1045,6 +1062,42 @@ def get_all_anime_seasons(anime):
                         slug,
                         allow_non_main=False,
                     )
+
+        # ----------------------------------------------------
+        # Canonical Bleach TYBW seasons
+        # ----------------------------------------------------
+
+        elif normalized_input in (
+             "tybw",
+             "bleach tybw",
+        ):
+
+             canonical_tybw = [
+                 "bleach-thousand-year-blood-war",
+                 "bleach-thousand-year-blood-war-the-separation",
+                 "bleach-thousand-year-blood-war-the-conflict",
+                 "bleach-thousand-year-blood-war-the-calamity",
+       ]
+
+       local_slugs = set(
+           get_local_anime_slugs()
+       )
+
+       indexed_slugs = {
+           str(x).strip()
+           for x in ANIME_INDEX.values()
+       }
+
+       for slug in canonical_tybw:
+           if (
+               slug in indexed_slugs
+               or slug in local_slugs
+           ):
+               add_candidate(
+                   slug,
+                   allow_non_main=False,
+               )
+            
 
         # ----------------------------------------------------
         # Canonical MHA seasons
