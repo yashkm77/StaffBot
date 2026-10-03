@@ -83,48 +83,40 @@ ANIME_ALIASES = {
     "hero x": "to-be-hero-x",
 
 
-    # --------------------------------------------------------
     # My Hero Academia
-    # --------------------------------------------------------
-
     "mha": "my-hero-academia",
-    "my hero academia": "my-hero-academia",
+    "bnha": "my-hero-academia",
+    "myhero": "my-hero-academia",
+    "heroaca": "my-hero-academia",
 
-    "mha s1": "my-hero-academia",
-    "mha s2": "my-hero-academia-2",
-    "mha s3": "my-hero-academia-3",
-    "mha s4": "my-hero-academia-4",
-    "mha s5": "my-hero-academia-5",
-    "mha s6": "my-hero-academia-6",
-    "mha s7": "my-hero-academia-7",
+    # My Hero Academia seasons
+    "mha2": "my-hero-academia-2",
+    "mha3": "my-hero-academia-3",
+    "mha4": "my-hero-academia-4",
+    "mha5": "my-hero-academia-5",
+    "mha6": "my-hero-academia-6",
+    "mha7": "my-hero-academia-7",
+    "mha8": "my-hero-academia-final-season",
+    "mha-final": "my-hero-academia-final-season",
 
-    "mha final": "my-hero-academia-final-season",
-    "mha final season": "my-hero-academia-final-season",
+    # Movies
+    "mha2heroes": "my-hero-academia-two-heroes",
+    "heroesrising": "my-hero-academia-heroes-rising",
+    "mha-heroes-rising": "my-hero-academia-heroes-rising",
+    "worldheroes": "my-hero-academia-ua-battle-heroes",
+    "youre-next": "my-hero-academia-you-re-next",
 
-    # MHA Movies
-    "mha two heroes":
-        "my-hero-academia-two-heroes",
+    # Vigilantes
+    "vigilantes": "my-hero-academia-vigilantes",
+    "mhavig": "my-hero-academia-vigilantes",
+    "mhavig s2": "my-hero-academia-vigilantes-season-2",
 
-    "mha heroes rising":
-        "my-hero-academia-heroes-rising",
-
-    "mha world heroes mission":
-        "my-hero-academia-world-heroes-mission",
-
-    "mha you're next":
-        "my-hero-academia-you-re-next",
-
-    "mha you are next":
-        "my-hero-academia-you-re-next",
-
-    "my hero academia you're next":
-        "my-hero-academia-you-re-next",
-
-    "my hero academia you are next":
-        "my-hero-academia-you-re-next",
-
-    "mha movie 4":
-        "my-hero-academia-you-re-next",
+    # Space Dandy
+    "space": "space-dandy",
+    "spacedandys1": "space-dandy",
+    "sd": "space-dandy",
+    "space2": "space-dandy-2nd-season",
+    "spacedandys2": "space-dandy-2nd-season",
 
 
     # --------------------------------------------------------
